@@ -149,13 +149,39 @@ export function calculateRecommendedRoute(
   // 全素材をカバーする最適ルートを取得（到達不能なら空配列）
   const bestRoute = dp.get(allMask) || [];
 
-  return bestRoute
-    // farmAmount: そのステージで最も必要数が多いアイテムの数 = 最低限の周回数の目安
-    .map(s => ({
-      ...s,
-      farmAmount: Math.max(...s.matchingItems.map(m => m.needed))
-    }))
-    .sort((a, b) => (b.worldLevel ?? 0) - (a.worldLevel ?? 0));
+  // 高難度ステージから順に周回し、周回後に残数を更新することで過剰周回を防ぐ
+  // 例: 13-1 は Rank4.boot(必要10) と Rank5.sword(必要2) を同時ドロップする。
+  //     優先アイテム(Rank5.sword)の必要数2を基準に周回するため、Rank4.bootも2個入手できる。
+  //     次にRank4.bootが必要なステージでは残数が8に減り、周回数の無駄を防ぐ。
+  const remainingNeeded = new Map<string, number>();
+  availableStages.forEach(s =>
+    s.matchingItems.forEach(m => {
+      if (!remainingNeeded.has(m.id)) remainingNeeded.set(m.id, m.needed);
+    })
+  );
+
+  return [...bestRoute]
+    .sort((a, b) => (b.worldLevel ?? 0) - (a.worldLevel ?? 0))
+    .map(s => {
+      // 現時点の残数でアイテムリストを更新し、すでに充足済みのものを除外
+      const updatedItems = s.matchingItems
+        .map(m => ({ ...m, needed: remainingNeeded.get(m.id) ?? 0 }))
+        .filter(m => m.needed > 0);
+
+      // priorityItemの残数を優先、なければ残数が最小のアイテムを基準に周回数を決める
+      const priorityItem =
+        updatedItems.find(m => m.id === s.priorityItemId) ??
+        updatedItems.reduce((min, m) => (m.needed < min.needed ? m : min), updatedItems[0]);
+      const consumeAmount = priorityItem?.needed ?? 0;
+
+      // 周回後に各アイテムの残数を減らす
+      updatedItems.forEach(m => {
+        remainingNeeded.set(m.id, Math.max(0, (remainingNeeded.get(m.id) ?? 0) - consumeAmount));
+      });
+
+      return { ...s, matchingItems: updatedItems };
+    })
+    .filter(s => s.matchingItems.length > 0); // すべて充足済みになったステージは除外
 }
 
 function getRouteWorldLevel(route: StageResult[]): number {
