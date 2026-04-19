@@ -55,7 +55,7 @@ describe('selectors', () => {
 
     it('should return fewer stages when showDuplicates is true if some stages have identical drop combinations', () => {
       // 擬似的なデータ: 81 と 82 を両方落とすステージが複数ある場合
-      const state = { ...baseState, showDuplicates: true } as any;
+      const state = { ...baseState, showDuplicates: true } as unknown as AppState;
       const stages = selectAllStages(state);
       
       // 同じアイテムセット (81, 82) を持つステージが 1 つだけであることを確認する
@@ -68,7 +68,7 @@ describe('selectors', () => {
     });
 
     it('should return fewer stages when showDuplicates is false', () => {
-      const state = { ...baseState, showDuplicates: false } as any;
+      const state = { ...baseState, showDuplicates: false } as unknown as AppState;
       const stages = selectAllStages(state);
       
       // 全ての必要アイテム ('81', '82') がカバーされていることを確認
@@ -78,7 +78,7 @@ describe('selectors', () => {
       expect(covered.has('82')).toBe(true);
 
       // かつ、無駄なステージ（新しいアイテムを1つも提供しないステージ）が含まれていないこと
-      const allStages = selectAllStages({ ...baseState, showDuplicates: true } as any);
+      const allStages = selectAllStages({ ...baseState, showDuplicates: true } as unknown as AppState);
       expect(stages.length).toBeLessThanOrEqual(allStages.length);
     });
   });

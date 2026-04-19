@@ -1,11 +1,11 @@
-import { Filter, Trash2, Minus, Plus, Zap, Swords, Sparkles, Layers } from 'lucide-react';
+import { Filter, Trash2, Minus, Plus, Zap, Swords, Sparkles, Layers, type LucideIcon } from 'lucide-react';
 import type { AttackType, RankKey, BlueprintWithState } from '../types';
 import { useStore } from '../store';
 import { selectMainItems, selectSubItems } from '../selectors';
 
 const RANKS = ['All', '8', '7', '6', '5', '4', '3', '2'] as const satisfies ("All" | RankKey)[];
 
-const ATTACK_TYPES: { label: string; value: AttackType | 'all'; icon: any }[] = [
+const ATTACK_TYPES: { label: string; value: AttackType | 'all'; icon: LucideIcon }[] = [
   { label: 'すべて', value: 'all', icon: Layers },
   { label: '物理', value: 'physical', icon: Swords },
   { label: '魔法', value: 'magic', icon: Sparkles },
