@@ -90,14 +90,10 @@ export function deduplicateStages(stages: StageResult[]): StageResult[] {
 }
 
 /**
- * ステージを効率が良い順（マッチするアイテム数 > スコア > ワールドレベル）にソートします。
+ * ステージをワールドレベル（進行度）の降順でソートします。
  */
 export function sortStages(stages: StageResult[]): StageResult[] {
-  return [...stages].sort((a, b) => 
-    b.matchingItems.length - a.matchingItems.length || 
-    b.score - a.score || 
-    getStageSortValue(b.id) - getStageSortValue(a.id)
-  );
+  return stages.toSorted((a, b) => getStageSortValue(b.id) - getStageSortValue(a.id));
 }
 
 function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResult {
@@ -141,7 +137,7 @@ export function getAvailableStageResults(
 
   // 候補ステージに対してのみ詳細な計算を行う
   return Array.from(candidateStageIds)
-    .map(id => STAGE_MAP.get(id)!)
+    .map(id => STAGE_MAP.get(id as StageResult['id'])!)
     .filter(stage => calculateWorldLevel(stage.world, stage.level) <= maxWorldLevel)
     .map(stage => {
       const matchingItems: MatchingItem[] = [];

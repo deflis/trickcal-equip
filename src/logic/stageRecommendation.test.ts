@@ -27,16 +27,14 @@ describe('stageRecommendation Utility Functions', () => {
   });
 
   describe('sortStages', () => {
-    it('マッチするアイテム数、スコア、ワールドレベルの順でソートされる', () => {
+    it('ワールドレベル（進行度）の降順でソートされる', () => {
       const result = sortStages(mockStages);
       
-      // 1. マッチ数が多い 4-1 (2個) が先頭
-      // 2. マッチ数が同じならスコアが高い 3-2 (10) > 5-1 (5)
-      // 3. スコアも同じならレベルが高い 3-2 > 3-1
-      expect(result[0].id).toBe('4-1');
-      expect(result[1].id).toBe('3-2');
-      expect(result[2].id).toBe('3-1');
-      expect(result[3].id).toBe('5-1');
+      // ワールドレベルが高い順に並ぶ
+      expect(result[0].id).toBe('5-1');
+      expect(result[1].id).toBe('4-1');
+      expect(result[2].id).toBe('3-2');
+      expect(result[3].id).toBe('3-1');
     });
   });
 });
