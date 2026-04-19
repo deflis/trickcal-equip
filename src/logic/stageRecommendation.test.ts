@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { getAvailableStageResults, calculateRecommendedRoute, deduplicateStages, sortStages } from './stageRecommendation';
 import { blueprints } from '../data/blueprints';
-import type { StageResult } from '../data/types';
+import { MAX_WORLD, type RankId, type StageResult } from '../data/types';
+import { range } from '../data/array';
 
 describe('stageRecommendation Utility Functions', () => {
   const mockStages: StageResult[] = [
@@ -237,45 +238,32 @@ describe('stageRecommendation Logic with Real Data', () => {
     });
   });
 
-  describe('全ランク 最小網羅シナリオ (魔法・物理)', () => {
-    const testRanks = [2, 4, 5, 6, 7, 8] as const;
-    const worlds = {
-      2: 3,
-      4: 12,
-      5: 16,
-      6: 20,
-      7: 24,
-      8: 28,
-    };
+  // ランク3以外の装備では必ず全装備をカバーできるルートがあるらしい
+  describe.each([2, ...range(4, 8)] as const)('ランク%dの', (rank) => {
+    describe.each(['物理', '魔法'] as const)('%s装備一式は', (type) => {
+      it('3ステージで全装備をカバーできるルートが必ず存在する', () => {
+        const weaponId = type === '魔法' ? blueprints[rank].wand : blueprints[rank].sword;
 
-    const types = ['魔法', '物理'] as const;
+        const shortages = new Map([
+          [weaponId, 42],
+          [blueprints[rank].hat, 42],
+          [blueprints[rank].ring, 42],
+          [blueprints[rank].accessory, 42],
+          [blueprints[rank].boot, 42],
+          [blueprints[rank].armor, 42],
+        ]);
 
-    const cases = testRanks.flatMap(rank => 
-      types.map(type => ({ rank, world: worlds[rank], type }))
-    );
 
-    it.each(cases)('ランク$rank の$type装備一式は World $world において3ステージで網羅される', ({ rank, world, type }) => {
-      const isMagic = type === '魔法';
-      const weaponId = isMagic ? blueprints[rank].wand : blueprints[rank].sword;
-      
-      const shortages = new Map([
-        [weaponId, 42],
-        [blueprints[rank].hat, 42],
-        [blueprints[rank].ring, 42],
-        [blueprints[rank].accessory, 42],
-        [blueprints[rank].boot, 42],
-        [blueprints[rank].armor, 42],
-      ]);
+        const results = getAvailableStageResults(shortages, MAX_WORLD, 10);
+        const route = calculateRecommendedRoute(results);
 
-      const results = getAvailableStageResults(shortages, world, 10);
-      const route = calculateRecommendedRoute(results);
+        // どのランク・タイプでも3ステージで網羅可能
+        expect(route.length).toBe(3);
 
-      // どのランク・タイプでも3ステージで網羅可能
-      expect(route.length).toBe(3);
-
-      const coveredItems = new Set();
-      route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
-      expect(coveredItems.size).toBe(6);
+        const coveredItems = new Set();
+        route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
+        expect(coveredItems.size).toBe(6);
+      });
     });
   });
 });
