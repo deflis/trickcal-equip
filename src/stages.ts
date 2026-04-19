@@ -976,7 +976,9 @@ export const STAGES_BY_LEVEL: Stages = {
   },
   "23": {
     "1": {
-      drops: [// TODO: 23-1
+      drops: [
+        blueprints[7].sword,
+        blueprints[7].armor,
       ]
     },
     "2": {
@@ -986,7 +988,9 @@ export const STAGES_BY_LEVEL: Stages = {
       ],
     },
     "3": {
-      drops: [// TODO: 23-3
+      drops: [
+        blueprints[7].wand,
+        blueprints[7].sword,
       ]
     },
     "4": {
@@ -1008,7 +1012,9 @@ export const STAGES_BY_LEVEL: Stages = {
       ],
     },
     "7": {
-      drops: [// TODO: 23-7
+      drops: [
+        blueprints[7].armor,
+        blueprints[7].hat,
       ]
     },
     "8": {
@@ -1018,11 +1024,15 @@ export const STAGES_BY_LEVEL: Stages = {
       ],
     },
     "9": {
-      drops: [// TODO: 23-9
+      drops: [
+        blueprints[7].accessory,
+        blueprints[7].sword,
       ]
     },
     "10": {
-      drops: [// TODO: 23-10
+      drops: [
+        blueprints[7].wand,
+        blueprints[7].sword,
       ]
     },
   },
@@ -1064,7 +1074,9 @@ export const STAGES_BY_LEVEL: Stages = {
       ],
     },
     "7": {
-      drops: [// TODO: 24-7
+      drops: [
+        blueprints[7].wand,
+        blueprints[7].ring,
       ]
     },
     "8": {
@@ -1096,7 +1108,9 @@ export const STAGES_BY_LEVEL: Stages = {
       ]
     },
     "3": {
-      drops: [// TODO: 25-3
+      drops: [
+        blueprints[7].armor,
+        blueprints[8].accessory,
       ]
     },
     "4": {
@@ -1124,7 +1138,9 @@ export const STAGES_BY_LEVEL: Stages = {
       ]
     },
     "10": {
-      drops: [// TODO: 25-10
+      drops: [
+        blueprints[7].armor,
+        blueprints[8].accessory,
       ]
     },
   },
