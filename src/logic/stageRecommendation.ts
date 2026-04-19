@@ -353,9 +353,23 @@ function finalizeRoute(
     })
   );
 
-  return [...bestRoute]
-    // 高難度ステージ（ワールドレベルが高い）から順に処理
-    .sort((a, b) => getStageSortValue(b.id) - getStageSortValue(a.id))
+  return bestRoute
+    // ランクが高い > 必要数が少ない > ワールドレベルが高い 順にソート
+    .toSorted((a, b) => {
+      const getMetrics = (s: StageResult) => {
+        const maxRank = Math.max(...s.matchingItems.map(m => parseInt(m.id.charAt(0))));
+        const minNeeded = Math.min(...s.matchingItems.filter(m => parseInt(m.id.charAt(0)) === maxRank).map(m => m.needed));
+        return { maxRank, minNeeded };
+      };
+      const ma = getMetrics(a);
+      const mb = getMetrics(b);
+
+      return (
+        mb.maxRank - ma.maxRank || 
+        ma.minNeeded - mb.minNeeded || 
+        getStageSortValue(b.id) - getStageSortValue(a.id)
+      );
+    })
     .map(s => {
       // 現時点の残数（シミュレーション結果）でアイテムリストを更新し、すでに充足済みのものを除外
       const updatedItems = s.matchingItems

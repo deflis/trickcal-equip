@@ -37,6 +37,35 @@ describe('stageRecommendation Utility Functions', () => {
       expect(result[3].id).toBe('3-1');
     });
   });
+  describe('おすすめルートの最終的な並び順 (finalizeRoute)', () => {
+    it('ランクが高い > 必要数が少ない > ワールドレベルが高い 順にソートされる', () => {
+      // ランク8の素材A (必要10)
+      // ランク8の素材B (必要2)
+      // ランク5の素材C (必要1)
+      const mockSelectedStages: StageResult[] = [
+        { id: '28-1', score: 10, matchingItems: [{ id: '81', name: 'Rank8-A', needed: 10 }], otherDrops: [] },
+        { id: '27-10', score: 2, matchingItems: [{ id: '82', name: 'Rank8-B', needed: 2 }], otherDrops: [] },
+        { id: '16-1', score: 1, matchingItems: [{ id: '51', name: 'Rank5-C', needed: 1 }], otherDrops: [] },
+      ];
+
+      // calculateRecommendedRoute 内部で行われる deduplicate や finalizeRoute の順序をシミュレート
+      // ここでは finalizeRoute (のソート部分) を直接呼び出すために、
+      // calculateRecommendedRoute の戻り値を確認する
+      
+      const route = calculateRecommendedRoute(mockSelectedStages);
+
+      // 期待される順序:
+      // 1位: 27-10 (ランク8, 必要数2) -> ランク8の中で最も必要数が少ない
+      // 2位: 28-1  (ランク8, 必要数10) -> ランク8
+      // 3位: 16-1  (ランク5, 必要数1)  -> ランクが低いので最後
+      
+      const ids = route.map(r => r.id);
+      
+      expect(ids[0]).toBe('27-10');
+      expect(ids[1]).toBe('28-1');
+      expect(ids[2]).toBe('16-1');
+    });
+  });
 });
 
 describe('stageRecommendation Logic with Real Data', () => {
