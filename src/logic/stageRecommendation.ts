@@ -23,7 +23,7 @@ function addPriorityInfo(result: StageResult): StageResult {
 
   return {
     ...result,
-    priorityItemId: priorityItems[0]?.id,
+    priorityItemId: priorityItems.length === 1 ? priorityItems[0].id : undefined,
     minNeededOfMaxRank
   };
 }
@@ -65,14 +65,6 @@ export function getAvailableStageResults(
       });
 
       if (matchingItems.length === 0) return null;
-
-      // 高ランク副産物を持つステージを優先するために小さなボーナスを加算
-      // 係数は必要アイテムscoreを超えないよう十分小さく設定
-      const BY_PRODUCT_WEIGHT = 0.01;
-      const maxByProductRank = otherDrops.length > 0
-        ? Math.max(...otherDrops.map(d => parseInt(d.id.charAt(0))))
-        : 0;
-      score += maxByProductRank * BY_PRODUCT_WEIGHT;
 
       const [w, n] = stage.id.split('-').map(Number);
       return addPriorityInfo({
