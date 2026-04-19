@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getAvailableStageResults, calculateRecommendedRoute, deduplicateStages, sortStages } from './stageRecommendation';
 import { blueprints } from '../data/blueprints';
-import { MAX_WORLD, type RankId, type StageResult } from '../data/types';
+import { MAX_WORLD, type StageResult } from '../data/types';
 import { range } from '../data/array';
 
 describe('stageRecommendation Utility Functions', () => {
