@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getAvailableStageResults, calculateRecommendedRoute } from './stageRecommendation';
-import { blueprints } from '../blueprints';
+import { blueprints } from '../data/blueprints';
 
 describe('stageRecommendation Logic with Real Data', () => {
   describe('World 3 シナリオ (ランク2素材)', () => {

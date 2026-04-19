@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { selectShortages, selectAllStages } from './selectors';
 import type { AppState } from './store';
-import type { BlueprintId } from './types';
+import type { BlueprintId } from './data/types';
 
 describe('selectors', () => {
   describe('selectShortages', () => {

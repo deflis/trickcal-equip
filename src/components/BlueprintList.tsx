@@ -1,5 +1,5 @@
 import { Filter, Trash2, Minus, Plus, Zap, Swords, Sparkles, Layers, type LucideIcon } from 'lucide-react';
-import type { AttackType, RankKey, BlueprintWithState } from '../types';
+import type { AttackType, RankKey, BlueprintWithState } from '../data/types';
 import { useStore } from '../store';
 import { selectMainItems, selectSubItems } from '../selectors';
 

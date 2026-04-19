@@ -1,6 +1,6 @@
-import { BLUEPRINTS } from "../blueprints";
-import { STAGES } from "../stages";
-import type { StageResult, MatchingItem, OtherDrop, ShortageMap } from "../types";
+import { BLUEPRINTS } from "../data/blueprints";
+import { STAGES } from "../data/stages";
+import type { StageResult, MatchingItem, OtherDrop, ShortageMap } from "../data/types";
 
 const blueprintMap = new Map(BLUEPRINTS.map(b => [b.id, b]));
 

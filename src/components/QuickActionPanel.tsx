@@ -1,6 +1,6 @@
 import { Trophy, Sparkles, Trash2, RefreshCcw, CheckCircle2 } from 'lucide-react';
-import { BLUEPRINTS, RANK_CONFIG } from '../blueprints';
-import type { AttackType, Blueprint, BlueprintId, RankKey } from '../types';
+import { BLUEPRINTS, RANK_CONFIG } from '../data/blueprints';
+import type { AttackType, Blueprint, BlueprintId, RankKey } from '../data/types';
 import { useStore } from '../store';
 
 const StageProgressInput = () => {

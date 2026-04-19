@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore } from './store';
-import type { BlueprintId } from './types';
+import type { BlueprintId } from './data/types';
 
 describe('useStore', () => {
   beforeEach(() => {

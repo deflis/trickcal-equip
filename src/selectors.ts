@@ -1,8 +1,8 @@
 import { createSelector } from 'reselect';
 import type { AppState } from './store';
-import { BLUEPRINTS } from './blueprints';
+import { BLUEPRINTS } from './data/blueprints';
 import { calculateRecommendedRoute, getAvailableStageResults, getCombinationKey } from './logic/stageRecommendation';
-import type { ShortageItem, ShortageMap, BlueprintWithState } from './types';
+import type { ShortageItem, ShortageMap, BlueprintWithState } from './data/types';
 
 const selectItems = (state: AppState) => state.items;
 const selectSelectedRank = (state: AppState) => state.selectedRank;

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { AttackType, RankKey, BlueprintId, ItemState } from './types';
-import { BLUEPRINTS, RANK_CONFIG } from './blueprints';
+import type { AttackType, RankKey, BlueprintId, ItemState } from './data/types';
+import { BLUEPRINTS, RANK_CONFIG } from './data/blueprints';
 
 export interface AppState {
   items: ItemState[];

@@ -1,7 +1,7 @@
 import { Info } from 'lucide-react';
 import { useStore } from '../store';
 import { selectRecommendedStage, selectAllStages } from '../selectors';
-import type { StageResult } from '../types';
+import type { StageResult } from '../data/types';
 
 interface StageListProps {
   activeTab: 'recommended' | 'all';

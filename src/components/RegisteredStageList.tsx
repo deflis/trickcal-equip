@@ -1,6 +1,6 @@
-import { range } from '../array';
-import { STAGES_BY_WORLD } from '../stages';
-import { MIN_WORLD, MAX_WORLD } from '../types';
+import { range } from '../data/array';
+import { STAGES_BY_WORLD } from '../data/stages';
+import { MIN_WORLD, MAX_WORLD } from '../data/types';
 
 const groupedStages = range(MIN_WORLD, MAX_WORLD).map((level) => {
   const stages = range(1, 10).filter(number => {
