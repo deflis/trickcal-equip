@@ -53,8 +53,10 @@ export const { STAGE_METADATA, STAGE_MAP, ITEM_TO_STAGES } = (() => {
   };
 })();
 
-export function getCombinationKey(items: MatchingItem[]): string {
-  return items.map(m => m.id).sort().join(',');
+export function getCombinationKey(matching: MatchingItem[], other: OtherDrop[] = []): string {
+  const mKey = matching.map(m => m.id).sort().join(',');
+  const oKey = other.map(o => o.id).sort().join(',');
+  return `m:${mKey}|o:${oKey}`;
 }
 
 /**
@@ -74,12 +76,14 @@ export function getStageSortValue(id: `${number}-${number}`): number {
 
 /**
  * 同じ素材の組み合わせを持つステージ群から、最もワールドレベルが高いものだけを残します。
+ * @param includeOtherDrops 副産物も含めて別の組み合わせとみなすかどうか（UI表示用はtrue、ルート計算用はfalseを推奨）
  */
-export function deduplicateStages(stages: StageResult[]): StageResult[] {
+export function deduplicateStages(stages: StageResult[], includeOtherDrops = true): StageResult[] {
   const uniqueMap = new Map<string, StageResult>();
   stages.forEach(stage => {
-    const key = getCombinationKey(stage.matchingItems);
-    if (key === "") return;
+    if (stage.matchingItems.length === 0) return;
+    
+    const key = getCombinationKey(stage.matchingItems, includeOtherDrops ? stage.otherDrops : []);
 
     const existing = uniqueMap.get(key);
     if (!existing || getStageSortValue(stage.id) > getStageSortValue(existing.id)) {
@@ -188,7 +192,8 @@ export function calculateRecommendedRoute(
   availableStages: StageResult[]
 ): StageResult[] {
   // 1. 重複を解除 (計算量を減らすため、各組み合わせで最もワールドレベルが高いものだけを残す)
-  const filteredStages = deduplicateStages(availableStages);
+  // ルート計算では副産物は考慮しない（効率を優先）
+  const filteredStages = deduplicateStages(availableStages, false);
 
   // 候補ステージから入手可能な素材IDを列挙する
   const attainableItems = new Set<string>();

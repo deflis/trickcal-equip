@@ -14,7 +14,7 @@ describe('stageRecommendation Utility Functions', () => {
 
   describe('deduplicateStages', () => {
     it('同一の素材組み合わせを持つステージから、最もワールドレベルが高いものだけを残す', () => {
-      // 3-1 と 3-2 は同じ素材セット (ItemA)
+      // 3-1 と 3-2 は同じ素材セット (ItemA) かつ副産物なし
       // 3-2 の方がレベルが高い (302 > 301) ので、3-1 が消えて 3-2 が残るはず
       const result = deduplicateStages(mockStages);
       
@@ -24,6 +24,52 @@ describe('stageRecommendation Utility Functions', () => {
       expect(ids).toContain('4-1');
       expect(ids).toContain('5-1');
       expect(result.length).toBe(3);
+    });
+
+    it('不足素材が同じでも副産物が異なる場合は別のステージとして扱う', () => {
+      const stagesWithDifferentByproducts: StageResult[] = [
+        { 
+          id: '3-1', 
+          score: 10, 
+          matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], 
+          otherDrops: [{ id: '22', name: 'ItemB' }] 
+        },
+        { 
+          id: '3-2', 
+          score: 10, 
+          matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], 
+          otherDrops: [{ id: '23', name: 'ItemC' }] 
+        },
+      ];
+
+      const result = deduplicateStages(stagesWithDifferentByproducts);
+      
+      expect(result.length).toBe(2);
+      expect(result.map(s => s.id)).toContain('3-1');
+      expect(result.map(s => s.id)).toContain('3-2');
+    });
+
+    it('includeOtherDrops: false の場合は副産物が異なっても同一とみなす', () => {
+      const stagesWithDifferentByproducts: StageResult[] = [
+        { 
+          id: '3-1', 
+          score: 10, 
+          matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], 
+          otherDrops: [{ id: '22', name: 'ItemB' }] 
+        },
+        { 
+          id: '3-2', 
+          score: 10, 
+          matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], 
+          otherDrops: [{ id: '23', name: 'ItemC' }] 
+        },
+      ];
+
+      const result = deduplicateStages(stagesWithDifferentByproducts, false);
+      
+      // 副産物を無視するため、3-2 (高レベル) だけが残る
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe('3-2');
     });
   });
 

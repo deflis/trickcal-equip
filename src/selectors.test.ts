@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { selectShortages, selectAllStages } from './selectors';
 import type { AppState } from './store';
 import type { BlueprintId } from './data/types';
+import { getCombinationKey } from './logic/stageRecommendation';
 
 describe('selectors', () => {
   describe('selectShortages', () => {
@@ -61,7 +62,7 @@ describe('selectors', () => {
       // 同じアイテムセットを持つステージが複数含まれている可能性があることを確認
       const combinations = new Map<string, number>();
       stages.forEach(s => {
-        const key = s.matchingItems.map(m => m.id).sort().join(',');
+        const key = getCombinationKey(s.matchingItems, s.otherDrops);
         combinations.set(key, (combinations.get(key) || 0) + 1);
       });
       
@@ -78,7 +79,7 @@ describe('selectors', () => {
       // 同一組み合わせの重複がないこと
       const combinations = new Set();
       stages.forEach(s => {
-        const key = s.matchingItems.map(m => m.id).sort().join(',');
+        const key = getCombinationKey(s.matchingItems, s.otherDrops);
         expect(combinations.has(key)).toBe(false);
         combinations.add(key);
       });
