@@ -60,7 +60,7 @@ export const StageList = ({ activeTab }: StageListProps) => {
                     )}
                   </div>
                   <h3 className="font-black text-xl text-slate-800 flex items-center gap-2">
-                    Area {result.id}
+                    World {result.id}
                   </h3>
                 </div>
               </div>
