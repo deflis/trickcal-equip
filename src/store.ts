@@ -29,6 +29,7 @@ export interface AppState {
   consumeHolding: (id: BlueprintId) => void;
   clearAll: () => void;
   clearRank: (rank: string) => void;
+  clearRankWithSub: (rank: string) => void;
   
   applyRankConfig: (rank: string, attackType: AttackType | 'all') => void;
 }
@@ -96,6 +97,15 @@ export const useStore = create<AppState>()(
       clearRank: (rank) => set((state) => ({
         items: state.items.map(i => i.id.startsWith(rank) ? { ...i, req: 0 } : i).filter(i => i.req > 0 || i.held > 0)
       })),
+
+      clearRankWithSub: (rank) => set((state) => {
+        const subRank = String(parseInt(rank) - 1);
+        return {
+          items: state.items.map(i =>
+            i.id.startsWith(rank) || i.id.startsWith(subRank) ? { ...i, req: 0 } : i
+          ).filter(i => i.req > 0 || i.held > 0)
+        };
+      }),
 
       applyRankConfig: (selectedRank, selectedAttackType) => {
         if (selectedAttackType === 'all' || selectedRank === 'All') return;
