@@ -71,11 +71,11 @@ describe('selectors', () => {
       expect(hasDuplicate).toBe(true);
     });
 
-    it('should filter out redundant stages when showDuplicates is false', () => {
+    it('should filter out identical drop combinations when showDuplicates is false', () => {
       const state = { ...baseState, showDuplicates: false } as unknown as AppState;
       const stages = selectAllStages(state);
       
-      // 1. 同一組み合わせの重複がないこと
+      // 同一組み合わせの重複がないこと
       const combinations = new Set();
       stages.forEach(s => {
         const key = s.matchingItems.map(m => m.id).sort().join(',');
@@ -83,7 +83,7 @@ describe('selectors', () => {
         combinations.add(key);
       });
 
-      // 2. 全ての必要アイテム ('81', '82') がカバーされていることを確認
+      // すべての必要アイテムが（ユニークな組み合わせを通じて）カバーされていること
       const covered = new Set();
       stages.forEach(s => s.matchingItems.forEach(m => covered.add(m.id)));
       expect(covered.has('81')).toBe(true);

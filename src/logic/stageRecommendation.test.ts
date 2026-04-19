@@ -1,6 +1,45 @@
 import { describe, it, expect } from 'vitest';
-import { getAvailableStageResults, calculateRecommendedRoute } from './stageRecommendation';
+import { getAvailableStageResults, calculateRecommendedRoute, deduplicateStages, sortStages } from './stageRecommendation';
 import { blueprints } from '../data/blueprints';
+import type { StageResult } from '../data/types';
+
+describe('stageRecommendation Utility Functions', () => {
+  const mockStages: StageResult[] = [
+    { id: '3-1', score: 10, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], otherDrops: [], worldLevel: 301 },
+    { id: '3-2', score: 10, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], otherDrops: [], worldLevel: 302 },
+    { id: '4-1', score: 20, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }, { id: '22', name: 'ItemB', needed: 10 }], otherDrops: [], worldLevel: 401 },
+    { id: '5-1', score: 5, matchingItems: [{ id: '23', name: 'ItemC', needed: 5 }], otherDrops: [], worldLevel: 501 },
+  ];
+
+  describe('deduplicateStages', () => {
+    it('同一の素材組み合わせを持つステージから、最もワールドレベルが高いものだけを残す', () => {
+      // 3-1 と 3-2 は同じ素材セット (ItemA)
+      // 3-2 の方がレベルが高いので、3-1 が消えて 3-2 が残るはず
+      const result = deduplicateStages(mockStages);
+      
+      const ids = result.map(s => s.id);
+      expect(ids).toContain('3-2');
+      expect(ids).not.toContain('3-1');
+      expect(ids).toContain('4-1');
+      expect(ids).toContain('5-1');
+      expect(result.length).toBe(3);
+    });
+  });
+
+  describe('sortStages', () => {
+    it('マッチするアイテム数、スコア、ワールドレベルの順でソートされる', () => {
+      const result = sortStages(mockStages);
+      
+      // 1. マッチ数が多い 4-1 (2個) が先頭
+      // 2. マッチ数が同じならスコアが高い 3-2 (10) > 5-1 (5)
+      // 3. スコアも同じならレベルが高い 3-2 > 3-1
+      expect(result[0].id).toBe('4-1');
+      expect(result[1].id).toBe('3-2');
+      expect(result[2].id).toBe('3-1');
+      expect(result[3].id).toBe('5-1');
+    });
+  });
+});
 
 describe('stageRecommendation Logic with Real Data', () => {
   describe('World 3 シナリオ (ランク2素材)', () => {

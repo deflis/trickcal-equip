@@ -1,7 +1,7 @@
 import { createSelector } from 'reselect';
 import type { AppState } from './store';
 import { BLUEPRINTS } from './data/blueprints';
-import { calculateRecommendedRoute, getAvailableStageResults, getCombinationKey } from './logic/stageRecommendation';
+import { calculateRecommendedRoute, getAvailableStageResults, deduplicateStages, sortStages } from './logic/stageRecommendation';
 import type { ShortageItem, ShortageMap, BlueprintWithState } from './data/types';
 
 const selectItems = (state: AppState) => state.items;
@@ -94,51 +94,28 @@ export const selectAvailableStages = createSelector(
 );
 
 /**
- * UI表示用にスコアや効率でソートされたステージリスト
+ * UI表示用にスコアや効率でソートされたステージリスト（このアイテムが取得できるすべてのステージを確認する）
+ * 重複するステージもすべて表示するモードと、同一構成のステージでワールドレベルが最も高いものだけを表示するモードを切り替えられるようにする
  */
-export const selectSortedAvailableStages = createSelector(
-  [selectAvailableStages],
-  (allStages) => {
-    // スコアと効率でソート (良いステージを前に持ってくる)
-    return [...allStages].sort((a, b) => 
-      b.matchingItems.length - a.matchingItems.length || 
-      b.score - a.score || 
-      b.worldLevel - a.worldLevel
-    );
-  }
-);
-
 export const selectAllStages = createSelector(
-  [selectSortedAvailableStages, selectShowDuplicates],
-  (sortedStages, showDuplicates) => {
+  [selectAvailableStages, selectShowDuplicates],
+  (allStages, showDuplicates) => {
     if (showDuplicates) {
-      // 重複を表示する場合：何も削らずにそのまま返す
-      return sortedStages;
+      // 重複を表示する場合：全件ソート
+      return sortStages(allStages);
     }
 
-    // 重複を隠す場合：包含関係にある（新しい素材を1つも提供しない）ステージを除外する
-    const coveredItems = new Set<string>();
-    const seenCombinations = new Set<string>();
+    // 重複（同一構成）を隠す場合：
+    // 1. まず同一ドロップ構成の重複を解除 (最善のワールドレベルのみ抽出)
+    const unique = deduplicateStages(allStages);
 
-    return sortedStages.filter(stage => {
-      const combinationKey = getCombinationKey(stage.matchingItems);
-      
-      // 同一組み合わせの重複を排除
-      if (seenCombinations.has(combinationKey)) return false;
-      seenCombinations.add(combinationKey);
-
-      // 包含関係の重複を排除（すでにカバーされた素材しか持たないステージを隠す）
-      const hasNewItem = stage.matchingItems.some(item => !coveredItems.has(item.id));
-      if (!hasNewItem) return false;
-      stage.matchingItems.forEach(item => coveredItems.add(item.id));
-      
-      return true;
-    });
+    // 2. 抽出されたユニークなステージのみをソート
+    return sortStages(unique);
   }
 );
 
 export const selectRecommendedStage = createSelector(
-  [selectSortedAvailableStages],
+  [selectAvailableStages],
   (allStages) => {
     return calculateRecommendedRoute(allStages);
   }

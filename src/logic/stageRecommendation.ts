@@ -59,6 +59,34 @@ export function getCombinationKey(items: MatchingItem[]): string {
   return items.map(m => m.id).sort().join(',');
 }
 
+/**
+ * 同じ素材の組み合わせを持つステージ群から、最もワールドレベルが高いものだけを残します。
+ */
+export function deduplicateStages(stages: StageResult[]): StageResult[] {
+  const uniqueMap = new Map<string, StageResult>();
+  stages.forEach(stage => {
+    const key = getCombinationKey(stage.matchingItems);
+    if (key === "") return;
+
+    const existing = uniqueMap.get(key);
+    if (!existing || stage.worldLevel > existing.worldLevel) {
+      uniqueMap.set(key, stage);
+    }
+  });
+  return Array.from(uniqueMap.values());
+}
+
+/**
+ * ステージを効率が良い順（マッチするアイテム数 > スコア > ワールドレベル）にソートします。
+ */
+export function sortStages(stages: StageResult[]): StageResult[] {
+  return [...stages].sort((a, b) => 
+    b.matchingItems.length - a.matchingItems.length || 
+    b.score - a.score || 
+    b.worldLevel - a.worldLevel
+  );
+}
+
 function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResult {
   if (result.matchingItems.length === 0) return result;
 
@@ -151,19 +179,8 @@ export function getAvailableStageResults(
 export function calculateRecommendedRoute(
   availableStages: StageResult[]
 ): StageResult[] {
-  // 同じ素材の組み合わせを持つステージをグループ化し、最も効率の良い（ワールドレベルが高い）ものだけを残す
-  const uniqueStagesMap = new Map<string, StageResult>();
-  availableStages.forEach(stage => {
-    const key = getCombinationKey(stage.matchingItems);
-    if (key === "") return;
-
-    const existing = uniqueStagesMap.get(key);
-    if (!existing || stage.worldLevel > existing.worldLevel) {
-      uniqueStagesMap.set(key, stage);
-    }
-  });
-
-  const filteredStages = Array.from(uniqueStagesMap.values());
+  // 1. 重複を解除 (計算量を減らすため、各組み合わせで最もワールドレベルが高いものだけを残す)
+  const filteredStages = deduplicateStages(availableStages);
 
   // 候補ステージから入手可能な素材IDを列挙する
   const attainableItems = new Set<string>();
