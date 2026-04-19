@@ -53,7 +53,7 @@ export const useStore = create<AppState>()(
       selectedAttackType: 'all',
       maxWorld: 28,
       maxStageNum: 10,
-      showDuplicates: true,
+      showDuplicates: false,
 
       setItems: (items) => set({ items }),
       setSelectedRank: (selectedRank) => set({ selectedRank }),

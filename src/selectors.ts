@@ -99,7 +99,7 @@ export const selectAvailableStages = createSelector(
 export const selectSortedAvailableStages = createSelector(
   [selectAvailableStages],
   (allStages) => {
-    // 元の配列を汚染しないようにスプレッド演算子でコピーしてからソート
+    // スコアと効率でソート (良いステージを前に持ってくる)
     return [...allStages].sort((a, b) => 
       b.matchingItems.length - a.matchingItems.length || 
       b.score - a.score || 
@@ -111,28 +111,34 @@ export const selectSortedAvailableStages = createSelector(
 export const selectAllStages = createSelector(
   [selectSortedAvailableStages, selectShowDuplicates],
   (sortedStages, showDuplicates) => {
+    if (showDuplicates) {
+      // 重複を表示する場合：何も削らずにそのまま返す
+      return sortedStages;
+    }
+
+    // 重複を隠す場合：包含関係にある（新しい素材を1つも提供しない）ステージを除外する
     const coveredItems = new Set<string>();
     const seenCombinations = new Set<string>();
 
     return sortedStages.filter(stage => {
       const combinationKey = getCombinationKey(stage.matchingItems);
+      
+      // 同一組み合わせの重複を排除
+      if (seenCombinations.has(combinationKey)) return false;
+      seenCombinations.add(combinationKey);
 
-      if (showDuplicates) {
-        if (seenCombinations.has(combinationKey)) return false;
-        seenCombinations.add(combinationKey);
-        return true;
-      } else {
-        const hasNewItem = stage.matchingItems.some(item => !coveredItems.has(item.id));
-        if (!hasNewItem) return false;
-        stage.matchingItems.forEach(item => coveredItems.add(item.id));
-        return true;
-      }
+      // 包含関係の重複を排除（すでにカバーされた素材しか持たないステージを隠す）
+      const hasNewItem = stage.matchingItems.some(item => !coveredItems.has(item.id));
+      if (!hasNewItem) return false;
+      stage.matchingItems.forEach(item => coveredItems.add(item.id));
+      
+      return true;
     });
   }
 );
 
 export const selectRecommendedStage = createSelector(
-  [selectAvailableStages],
+  [selectSortedAvailableStages],
   (allStages) => {
     return calculateRecommendedRoute(allStages);
   }

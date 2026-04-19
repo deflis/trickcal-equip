@@ -53,33 +53,41 @@ describe('selectors', () => {
       maxStageNum: 10,
     };
 
-    it('should return fewer stages when showDuplicates is true if some stages have identical drop combinations', () => {
+    it('should return all stages (including duplicates) when showDuplicates is true', () => {
       // 擬似的なデータ: 81 と 82 を両方落とすステージが複数ある場合
       const state = { ...baseState, showDuplicates: true } as unknown as AppState;
       const stages = selectAllStages(state);
       
-      // 同じアイテムセット (81, 82) を持つステージが 1 つだけであることを確認する
-      const combinations = new Set();
+      // 同じアイテムセットを持つステージが複数含まれている可能性があることを確認
+      const combinations = new Map<string, number>();
       stages.forEach(s => {
         const key = s.matchingItems.map(m => m.id).sort().join(',');
-        expect(combinations.has(key)).toBe(false); // 重複がないこと
-        combinations.add(key);
+        combinations.set(key, (combinations.get(key) || 0) + 1);
       });
+      
+      // 81, 82 をドロップするステージは実データ上で複数存在するため、重複があるはず
+      const counts = Array.from(combinations.values());
+      const hasDuplicate = counts.some(count => count > 1);
+      expect(hasDuplicate).toBe(true);
     });
 
-    it('should return fewer stages when showDuplicates is false', () => {
+    it('should filter out redundant stages when showDuplicates is false', () => {
       const state = { ...baseState, showDuplicates: false } as unknown as AppState;
       const stages = selectAllStages(state);
       
-      // 全ての必要アイテム ('81', '82') がカバーされていることを確認
+      // 1. 同一組み合わせの重複がないこと
+      const combinations = new Set();
+      stages.forEach(s => {
+        const key = s.matchingItems.map(m => m.id).sort().join(',');
+        expect(combinations.has(key)).toBe(false);
+        combinations.add(key);
+      });
+
+      // 2. 全ての必要アイテム ('81', '82') がカバーされていることを確認
       const covered = new Set();
       stages.forEach(s => s.matchingItems.forEach(m => covered.add(m.id)));
       expect(covered.has('81')).toBe(true);
       expect(covered.has('82')).toBe(true);
-
-      // かつ、無駄なステージ（新しいアイテムを1つも提供しないステージ）が含まれていないこと
-      const allStages = selectAllStages({ ...baseState, showDuplicates: true } as unknown as AppState);
-      expect(stages.length).toBeLessThanOrEqual(allStages.length);
     });
   });
 });
