@@ -82,7 +82,7 @@ export const selectPriorityItems = createSelector(
   }
 );
 
-export const selectRawAvailableStages = createSelector(
+export const selectAvailableStages = createSelector(
   [selectShortageMap, selectMaxWorld, selectMaxStageNum],
   (shortageMap, maxWorld, maxStageNum) => {
     return getAvailableStageResults(
@@ -93,13 +93,28 @@ export const selectRawAvailableStages = createSelector(
   }
 );
 
+/**
+ * UI表示用にスコアや効率でソートされたステージリスト
+ */
+export const selectSortedAvailableStages = createSelector(
+  [selectAvailableStages],
+  (allStages) => {
+    // 元の配列を汚染しないようにスプレッド演算子でコピーしてからソート
+    return [...allStages].sort((a, b) => 
+      b.matchingItems.length - a.matchingItems.length || 
+      b.score - a.score || 
+      (b.worldLevel ?? 0) - (a.worldLevel ?? 0)
+    );
+  }
+);
+
 export const selectAllStages = createSelector(
-  [selectRawAvailableStages, selectShowDuplicates],
-  (allStages, showDuplicates) => {
+  [selectSortedAvailableStages, selectShowDuplicates],
+  (sortedStages, showDuplicates) => {
     const coveredItems = new Set<string>();
     const seenCombinations = new Set<string>();
 
-    return allStages.filter(stage => {
+    return sortedStages.filter(stage => {
       const combinationKey = getCombinationKey(stage.matchingItems);
 
       if (showDuplicates) {
@@ -117,7 +132,7 @@ export const selectAllStages = createSelector(
 );
 
 export const selectRecommendedStage = createSelector(
-  [selectRawAvailableStages],
+  [selectAvailableStages],
   (allStages) => {
     return calculateRecommendedRoute(allStages);
   }

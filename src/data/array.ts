@@ -1,8 +1,9 @@
 import type { IntClosedRange } from "type-fest";
 
-function* rangeIterator(start: number, end: number): Generator<number, void, unknown> {
+export function* rangeIterator<TStart extends number, TEnd extends number>(start: TStart, end: TEnd): Generator<IntClosedRange<TStart, TEnd>, void, unknown> {
+  type RangeType = IntClosedRange<TStart, TEnd>;
   for (let i = start; i <= end; i++) {
-    yield i;
+    yield i as unknown as RangeType;
   }
 }
 

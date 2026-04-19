@@ -43,7 +43,7 @@ export type BlueprintWithState = Blueprint & {
 export const MIN_WORLD = 3;
 export const MAX_WORLD = 28;
 export type World = IntClosedRange<typeof MIN_WORLD, typeof MAX_WORLD>;
-export type WorldStage = IntClosedRange<1, 10>;
+export type WorldLevel = IntClosedRange<1, 10>;
 
 export type DropId = BlueprintId;
 
@@ -61,33 +61,33 @@ export type ShortageItem = {
 export type ShortageMap = Map<BlueprintId, number>;
 
 export type Stage = {
-  id: `${World}-${WorldStage}`;
+  id: `${World}-${WorldLevel}`;
   drops: DropId[];
 };
 
 export type Worlds = {
   [key in World]: {
-    [key in WorldStage]: Omit<Stage, "id">;
+    [key in WorldLevel]: Omit<Stage, "id">;
   }
 }
 
 export type MatchingItem = {
-  id: string;
+  id: DropId;
   name: string | undefined;
   needed: number;
 };
 
 export type OtherDrop = {
-  id: string;
+  id: DropId;
   name: string | undefined;
 };
 
 export type StageResult = {
-  id: string;
+  id: `${World}-${WorldLevel}`;
   score: number;
   matchingItems: MatchingItem[];
   otherDrops?: OtherDrop[];
   worldLevel?: number;
-  priorityItemId?: string;
+  priorityItemId?: DropId;
   minNeededOfMaxRank?: number;
 };

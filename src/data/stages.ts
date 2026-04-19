@@ -1306,8 +1306,8 @@ export const STAGES_BY_WORLD = {
 } as const satisfies Worlds;
 
 export const STAGES: Stage[] = range(MIN_WORLD, MAX_WORLD).flatMap((world) =>
-  range(1, 10).map((number) => ({
-    id: `${world}-${number}`,
-    ...STAGES_BY_WORLD[world][number],
+  range(1, 10).map((level) => ({
+    id: `${world}-${level}`,
+    ...STAGES_BY_WORLD[world][level],
   } satisfies Stage))
 );

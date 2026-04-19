@@ -1,8 +1,59 @@
+import { rangeIterator } from "../data/array";
 import { BLUEPRINTS } from "../data/blueprints";
-import { STAGES } from "../data/stages";
-import type { StageResult, MatchingItem, OtherDrop, ShortageMap } from "../data/types";
+import { STAGES_BY_WORLD } from "../data/stages";
+import { type StageResult, type MatchingItem, type OtherDrop, type ShortageMap, type BlueprintId, type Blueprint, MIN_WORLD, MAX_WORLD, type Stage, type World, type WorldLevel } from "../data/types";
 
-const blueprintMap = new Map(BLUEPRINTS.map(b => [b.id, b]));
+// --- 事前計算セクション ---
+
+/**
+ * IDからアイテム情報を即座に取得するためのMap
+ */
+export const BLUEPRINT_MAP = new Map<BlueprintId, Blueprint>(
+  BLUEPRINTS.map(b => [b.id, b])
+);
+
+/**
+ * ステージ情報を最適化したメタデータとインデックス
+ */
+export const { STAGE_METADATA, STAGE_MAP, ITEM_TO_STAGES } = (() => {
+  const metadata: (Stage & { 
+    id: `${World}-${WorldLevel}`, world: World, level: WorldLevel, worldLevel: number, dropSet: Set<BlueprintId> 
+  })[] = [];
+  const stageMap = new Map<string, typeof metadata[number]>();
+  const itemToStages = new Map<BlueprintId, string[]>();
+
+  for (const world of rangeIterator(MIN_WORLD, MAX_WORLD)) {
+    for (const level of rangeIterator(1, 10)) {
+      const id = `${world}-${level}` as const;
+      const worldLevel = world * 100 + level;
+      const stageData = STAGES_BY_WORLD[world][level];
+
+      const stage = {
+        ...stageData,
+        id,
+        world,
+        level,
+        worldLevel,
+        dropSet: new Set(stageData.drops)
+      };
+
+      metadata.push(stage);
+      stageMap.set(id, stage);
+
+      stageData.drops.forEach(dropId => {
+        const stageIds = itemToStages.get(dropId) || [];
+        stageIds.push(id);
+        itemToStages.set(dropId, stageIds);
+      });
+    }
+  }
+
+  return { 
+    STAGE_METADATA: metadata, 
+    STAGE_MAP: stageMap, 
+    ITEM_TO_STAGES: itemToStages 
+  };
+})();
 
 export function getCombinationKey(items: MatchingItem[]): string {
   return items.map(m => m.id).sort().join(',');
@@ -18,7 +69,7 @@ function addPriorityInfo(result: StageResult): StageResult {
   const maxRankItems = result.matchingItems.filter(mi => parseInt(mi.id.charAt(0)) === maxRank);
   const minNeededOfMaxRank = Math.min(...maxRankItems.map(mi => mi.needed));
 
-  // 3. 優先アイテム（そのステージで集めるべきターゲット）を特定（タイの場合は先頭を採用）
+  // 3. 優先アイテム（そのステージで集めるべきターゲット）を特定
   const priorityItems = maxRankItems.filter(mi => mi.needed === minNeededOfMaxRank);
 
   return {
@@ -29,19 +80,29 @@ function addPriorityInfo(result: StageResult): StageResult {
 }
 
 /**
- * 到達可能なステージの中から、不足素材をドロップするステージをすべて抽出し、スコア順にソートして返します。
+ * 到達可能なステージの中から、不足素材をドロップするステージをすべて抽出して返します。
+ * ソートは行いません。呼び出し側で必要に応じてソートしてください。
  */
 export function getAvailableStageResults(
   shortages: ShortageMap,
   maxWorld: number,
   maxStageNum: number
 ): StageResult[] {
+  // 不足素材をドロップする「可能性がある」ステージIDを収集
+  const candidateStageIds = new Set<string>();
+  for (const itemId of shortages.keys()) {
+    const stages = ITEM_TO_STAGES.get(itemId);
+    if (stages) {
+      stages.forEach(id => candidateStageIds.add(id));
+    }
+  }
 
-  return STAGES
-    .filter(stage => {
-      const [world, num] = stage.id.split('-').map(Number);
-      return world < maxWorld || (world === maxWorld && num <= maxStageNum);
-    })
+  const maxWorldLevel = maxWorld * 100 + maxStageNum;
+
+  // 候補ステージに対してのみ詳細な計算を行う
+  return Array.from(candidateStageIds)
+    .map(id => STAGE_MAP.get(id)!)
+    .filter(stage => stage.worldLevel <= maxWorldLevel)
     .map(stage => {
       const matchingItems: MatchingItem[] = [];
       const otherDrops: OtherDrop[] = [];
@@ -53,34 +114,25 @@ export function getAvailableStageResults(
           score += needed;
           matchingItems.push({
             id: dropId,
-            name: blueprintMap.get(dropId)?.name,
+            name: BLUEPRINT_MAP.get(dropId)?.name,
             needed
           });
         } else {
           otherDrops.push({
             id: dropId,
-            name: blueprintMap.get(dropId)?.name
+            name: BLUEPRINT_MAP.get(dropId)?.name
           });
         }
       });
 
-      if (matchingItems.length === 0) return null;
-
-      const [w, n] = stage.id.split('-').map(Number);
       return addPriorityInfo({
         id: stage.id,
         score,
         matchingItems,
         otherDrops,
-        worldLevel: w * 100 + n
+        worldLevel: stage.worldLevel
       } as StageResult);
-    })
-    .filter((s): s is StageResult => s !== null)
-    .sort((a, b) => 
-      b.matchingItems.length - a.matchingItems.length || 
-      b.score - a.score || 
-      (b.worldLevel ?? 0) - (a.worldLevel ?? 0)
-    );
+    });
 }
 
 /**
