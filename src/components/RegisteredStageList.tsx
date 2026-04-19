@@ -2,11 +2,11 @@ import { range } from '../data/array';
 import { STAGES_BY_WORLD } from '../data/stages';
 import { MIN_WORLD, MAX_WORLD } from '../data/types';
 
-const groupedStages = range(MIN_WORLD, MAX_WORLD).map((level) => {
-  const stages = range(1, 10).filter(number => {
-    return STAGES_BY_WORLD[level][number].drops.length > 0;
-  }).map(num => `${level}-${num}`);
-  return [level, stages] as const;
+const groupedStages = range(MIN_WORLD, MAX_WORLD).map((world) => {
+  const stages = range(1, 10).filter(stage => {
+    return STAGES_BY_WORLD[world][stage].drops.length > 0;
+  });
+  return [world, stages] as const;
 }).filter(([, stageIds]) => stageIds.length > 0);
 
 
