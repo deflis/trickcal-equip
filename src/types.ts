@@ -1,11 +1,10 @@
-import type { IntRange } from "type-fest";
+import type { IntClosedRange } from "type-fest";
 
 // --- Wiki準拠のデータ定義 ---
-export type RankId = IntRange<2, 9>;
+export const MIN_RANK = 2;
+export const MAX_RANK = 8;
+export type RankId = IntClosedRange<typeof MIN_RANK, typeof MAX_RANK>;
 export type RankKey = `${RankId}`;
-
-export const MAX_RANK = 8 satisfies RankId;
-
 
 export type ItemConfig = {
   main: number; // ランクごとの必要枚数
@@ -40,9 +39,11 @@ export type BlueprintWithState = Blueprint & {
 };
 
 
-// Stage2まではランク1の装備がドロップするため、ランク2以上の装備のみを対象とする
-export type StageLevel = IntRange<3, 29>;
-export type StageNumber = IntRange<1, 11>;
+// World2まではランク1の装備がドロップするため、ランク2以上の装備のみを対象とする
+export const MIN_WORLD = 3;
+export const MAX_WORLD = 28;
+export type World = IntClosedRange<typeof MIN_WORLD, typeof MAX_WORLD>;
+export type WorldStage = IntClosedRange<1, 10>;
 
 export type DropId = BlueprintId;
 
@@ -60,13 +61,13 @@ export type ShortageItem = {
 export type ShortageMap = Map<BlueprintId, number>;
 
 export type Stage = {
-  id: `${StageLevel}-${StageNumber}`;
+  id: `${World}-${WorldStage}`;
   drops: DropId[];
 };
 
-export type Stages = {
-  [key in StageLevel]?: {
-    [key in StageNumber]?: Omit<Stage, "id">;
+export type Worlds = {
+  [key in World]: {
+    [key in WorldStage]: Omit<Stage, "id">;
   }
 }
 

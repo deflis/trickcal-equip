@@ -1,3 +1,4 @@
+import { range } from "./array";
 import { MAX_RANK, type Blueprint, type EquipType, type EquipTypeId, type ItemConfig, type RankId, type RankKey } from "./types";
 
 export const RANK_CONFIG = {
@@ -31,8 +32,7 @@ export const EQUIPS = {
   'wand': 7,
 } as const satisfies Record<string, EquipTypeId>;
 
-function generateBlueprints(maxRank: RankId = MAX_RANK): Blueprint[] {
-  return Array.from({ length: maxRank }, (_, i) => (maxRank - i) as RankId)
+export const BLUEPRINTS: Blueprint[] = range(2, MAX_RANK).reverse()
     .flatMap(r =>
       EQUIP_TYPES.map(type => ({
         id: `${r}${type.id}` as `${RankId}${EquipTypeId}`,
@@ -43,9 +43,6 @@ function generateBlueprints(maxRank: RankId = MAX_RANK): Blueprint[] {
         attackType: type.attackType,
       }))
     );
-}
-
-export const BLUEPRINTS = generateBlueprints();
 
 export type BlueprintMap = {
   [key in RankId]: {
@@ -60,7 +57,7 @@ export type BlueprintMap = {
 }
 
 // 逆引き用
-export const blueprints = Array.from({ length: MAX_RANK }, (_, i) => (MAX_RANK - i) as RankId)
+export const blueprints: BlueprintMap = range(2, MAX_RANK).reverse()
   .reduce<BlueprintMap>((acc, rank) => {
     return {
       ...acc,
