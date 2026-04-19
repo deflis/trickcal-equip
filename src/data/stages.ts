@@ -897,23 +897,33 @@ export const STAGES_BY_WORLD = {
       ]
     },
     2: {
-      drops: [// TODO: 21-2
+      drops: [
+        blueprints[6].ring,
+        blueprints[7].accessory,
       ]
     },
     3: {
-      drops: [// TODO: 21-3
+      drops: [
+        blueprints[6].accessory,
+        blueprints[7].wand,
       ]
     },
     4: {
-      drops: [// TODO: 21-4
+      drops: [
+        blueprints[6].wand,
+        blueprints[7].armor,
       ]
     },
     5: {
-      drops: [// TODO: 21-5
+      drops: [
+        blueprints[6].armor,
+        blueprints[7].hat,
       ]
     },
     6: {
-      drops: [// TODO: 21-6
+      drops: [
+        blueprints[6].hat,
+        blueprints[7].boot,
       ]
     },
     7: {
@@ -925,45 +935,65 @@ export const STAGES_BY_WORLD = {
       ]
     },
     9: {
-      drops: [// TODO: 21-9
+      drops: [
+        blueprints[6].sword,
+        blueprints[7].accessory,
       ]
     },
     10: {
-      drops: [// TODO: 21-10
+      drops: [
+        blueprints[6].accessory,
+        blueprints[7].wand,
       ]
     },
   },
   22: {
     1: {
-      drops: [// TODO: 22-1
+      drops: [
+        blueprints[6].wand,
+        blueprints[7].armor,
       ]
     },
     2: {
-      drops: [// TODO: 22-2
+      drops: [
+        blueprints[6].armor,
+        blueprints[7].hat,
       ]
     },
     3: {
-      drops: [// TODO: 22-3
+      drops: [
+        blueprints[6].hat,
+        blueprints[7].boot,
       ]
     },
     4: {
-      drops: [// TODO: 22-4
+      drops: [
+        blueprints[6].boot,
+        blueprints[7].ring,
       ]
     },
     5: {
-      drops: [// TODO: 22-5
+      drops: [
+        blueprints[6].ring,
+        blueprints[7].sword,
       ]
     },
     6: {
-      drops: [// TODO: 22-6
+      drops: [
+        blueprints[6].sword,
+        blueprints[7].accessory,
       ]
     },
     7: {
-      drops: [// TODO: 22-7
+      drops: [
+        blueprints[6].accessory,
+        blueprints[7].wand,
       ]
     },
     8: {
-      drops: [// TODO: 22-8
+      drops: [
+        blueprints[6].wand,
+        blueprints[7].armor,
       ]
     },
     9: {
@@ -971,7 +1001,9 @@ export const STAGES_BY_WORLD = {
       ]
     },
     10: {
-      drops: [// TODO: 22-10
+      drops: [
+        blueprints[6].hat,
+        blueprints[7].boot,
       ]
     },
   },
