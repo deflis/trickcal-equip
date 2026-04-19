@@ -1,4 +1,4 @@
-import { Trophy, Sparkles, Trash2, RefreshCcw, Swords, Sparkle, CheckCircle2 } from 'lucide-react';
+import { Trophy, Sparkles, Trash2, RefreshCcw, CheckCircle2 } from 'lucide-react';
 import { BLUEPRINTS, RANK_CONFIG } from '../blueprints';
 import type { AttackType, Blueprint, BlueprintId, RankKey } from '../types';
 import { useStore } from '../store';
@@ -58,33 +58,21 @@ const CollectionModeSection = () => {
   const clearItem = useStore(s => s.clearItem);
 
   const hasRequirements = items.length > 0;
-  const physActive = selectedAttackType === 'physical';
-  const magicActive = selectedAttackType === 'magic';
-  const isTypeSelected = physActive || magicActive;
-
-  const onAttackTypeChange = (type: AttackType | 'all') => {
-    setSelectedAttackType(type);
-    applyRankConfig(selectedRank, type);
-  };
-
-  const handleToggle = (type: AttackType) => {
-    if (selectedAttackType === type) {
-      onAttackTypeChange('all');
-    } else {
-      onAttackTypeChange(type);
-    }
-  };
-
   const config = selectedRank !== 'All' ? RANK_CONFIG[selectedRank as RankKey] : null;
   const hasSub = config ? config.sub > 0 : false;
+  const isTypeSelected = selectedAttackType !== 'all';
 
-  // 個別装備トグル用: 現在選択中のランク・攻撃タイプに対応する装備リスト
   const targetBlueprints = isTypeSelected && selectedRank !== 'All'
     ? BLUEPRINTS.filter(b =>
         b.rank === parseInt(selectedRank) &&
         (b.attackType === selectedAttackType || b.attackType === 'both')
       )
     : [];
+
+  const handleAttackTypeSelect = (type: AttackType) => {
+    setSelectedAttackType(type);
+    applyRankConfig(selectedRank, type);
+  };
 
   const handleItemToggle = (bp: Blueprint, currentlyOn: boolean) => {
     const subId = hasSub
@@ -118,38 +106,42 @@ const CollectionModeSection = () => {
 
       {selectedRank !== 'All' && config ? (
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleToggle('physical')}
-              className={`relative py-4 rounded-xl flex flex-col items-center transition-all active:scale-95 shadow-md border-2 ${
-                physActive
-                  ? 'bg-amber-400 text-indigo-950 border-amber-300'
-                  : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
-              }`}
-            >
-              <Swords className={`w-5 h-5 mb-1 ${physActive ? 'text-indigo-900' : 'text-indigo-300'}`} />
-              <span className="font-bold text-sm">物理キャラ</span>
-              {physActive && <div className="absolute top-1 right-1 bg-indigo-900 text-white rounded-full p-0.5"><CheckCircle2 className="w-3 h-3" /></div>}
-            </button>
+          <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-2">
+            <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">装備を選択</p>
 
-            <button
-              onClick={() => handleToggle('magic')}
-              className={`relative py-4 rounded-xl flex flex-col items-center transition-all active:scale-95 shadow-md border-2 ${
-                magicActive
-                  ? 'bg-purple-400 text-indigo-950 border-purple-300'
-                  : 'bg-white/10 hover:bg-white/20 border-white/10 text-white'
-              }`}
-            >
-              <Sparkle className={`w-5 h-5 mb-1 ${magicActive ? 'text-indigo-900' : 'text-indigo-300'}`} />
-              <span className="font-bold text-sm">魔法キャラ</span>
-              {magicActive && <div className="absolute top-1 right-1 bg-indigo-900 text-white rounded-full p-0.5"><CheckCircle2 className="w-3 h-3" /></div>}
-            </button>
-          </div>
+            <div className="flex flex-wrap gap-2">
+              {isTypeSelected && (
+                <button
+                  onClick={() => setSelectedAttackType('all')}
+                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border bg-white/5 border-white/20 text-white/60 hover:bg-white/10"
+                >
+                  すべて
+                </button>
+              )}
+              <button
+                onClick={() => handleAttackTypeSelect('physical')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${
+                  selectedAttackType === 'physical'
+                    ? 'bg-amber-400/30 border-amber-400/50 text-amber-200'
+                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                }`}
+              >
+                物理装備
+              </button>
+              <button
+                onClick={() => handleAttackTypeSelect('magic')}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${
+                  selectedAttackType === 'magic'
+                    ? 'bg-purple-400/30 border-purple-400/50 text-purple-200'
+                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                }`}
+              >
+                魔法装備
+              </button>
+            </div>
 
-          {isTypeSelected && targetBlueprints.length > 0 && (
-            <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-2">
-              <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">入手済みの装備を除外</p>
-              <div className="flex flex-wrap gap-2">
+            {isTypeSelected && targetBlueprints.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1 border-t border-white/10">
                 {targetBlueprints.map(bp => {
                   const isOn = items.some(i => i.id === bp.id && i.req > 0);
                   return (
@@ -162,13 +154,13 @@ const CollectionModeSection = () => {
                           : 'bg-white/5 border-white/10 text-white/40 line-through'
                       }`}
                     >
-                      {bp.name}
+                      {bp.type}
                     </button>
                   );
                 })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="flex justify-between items-center px-1">
             <div className="flex items-center gap-4 text-[10px] opacity-70 font-bold text-amber-200">
