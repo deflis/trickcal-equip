@@ -1,4 +1,4 @@
-import { Calculator, ExternalLink } from 'lucide-react';
+import { Calculator } from 'lucide-react';
 
 export const Header = () => (
   <header className="mb-8 text-center">
