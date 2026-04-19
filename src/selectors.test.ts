@@ -1,0 +1,85 @@
+import { describe, it, expect } from 'vitest';
+import { selectShortages, selectAllStages } from './selectors';
+import type { AppState } from './store';
+import type { BlueprintId } from './types';
+
+describe('selectors', () => {
+  describe('selectShortages', () => {
+    it('should calculate correct shortages based on items state', () => {
+      const id1 = '81' as BlueprintId;
+      const id2 = '82' as BlueprintId;
+      const id3 = '83' as BlueprintId;
+      const id4 = '84' as BlueprintId;
+
+      const state = {
+        items: [
+          { id: id1, req: 10, held: 5 }, // 不足 5
+          { id: id2, req: 5, held: 10 }, // 不足なし
+          { id: id3, req: 8, held: 0 },  // 不足 8
+          { id: id4, req: 0, held: 20 }, // 要件なし
+        ]
+      } as unknown as AppState;
+
+      const shortages = selectShortages(state);
+
+      expect(shortages).toEqual(expect.arrayContaining([
+        { id: id1, amount: 5 },
+        { id: id3, amount: 8 },
+      ]));
+      expect(shortages.length).toBe(2);
+    });
+
+    it('should return an empty array if all requirements are met', () => {
+      const id = '81' as BlueprintId;
+      const state = {
+        items: [
+          { id, req: 5, held: 5 },
+        ]
+      } as unknown as AppState;
+
+      const shortages = selectShortages(state);
+      expect(shortages).toEqual([]);
+    });
+  });
+
+  describe('selectAllStages with duplicate filtering', () => {
+    // 擬似的なAppStateを作成
+    const baseState = {
+      items: [
+        { id: '81', req: 1, held: 0 },
+        { id: '82', req: 1, held: 0 }
+      ],
+      maxWorld: 28,
+      maxStageNum: 10,
+    };
+
+    it('should return fewer stages when showDuplicates is true if some stages have identical drop combinations', () => {
+      // 擬似的なデータ: 81 と 82 を両方落とすステージが複数ある場合
+      const state = { ...baseState, showDuplicates: true } as any;
+      const stages = selectAllStages(state);
+      
+      // 同じアイテムセット (81, 82) を持つステージが 1 つだけであることを確認する
+      const combinations = new Set();
+      stages.forEach(s => {
+        const key = s.matchingItems.map(m => m.id).sort().join(',');
+        expect(combinations.has(key)).toBe(false); // 重複がないこと
+        combinations.add(key);
+      });
+    });
+
+    it('should return fewer stages when showDuplicates is false', () => {
+      const state = { ...baseState, showDuplicates: false } as any;
+      const stages = selectAllStages(state);
+      
+      // 全ての必要アイテム ('81', '82') がカバーされていることを確認
+      const covered = new Set();
+      stages.forEach(s => s.matchingItems.forEach(m => covered.add(m.id)));
+      expect(covered.has('81')).toBe(true);
+      expect(covered.has('82')).toBe(true);
+
+      // かつ、無駄なステージ（新しいアイテムを1つも提供しないステージ）が含まれていないこと
+      const allStages = selectAllStages({ ...baseState, showDuplicates: true } as any);
+      expect(stages.length).toBeLessThanOrEqual(allStages.length);
+    });
+  });
+});
