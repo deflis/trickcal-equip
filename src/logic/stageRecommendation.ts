@@ -59,8 +59,8 @@ export function getCombinationKey(items: MatchingItem[]): string {
   return items.map(m => m.id).sort().join(',');
 }
 
-function addPriorityInfo(result: StageResult): StageResult {
-  if (result.matchingItems.length === 0 || result.priorityItemId) return result;
+function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResult {
+  if (result.matchingItems.length === 0) return result;
 
   // 1. 最高ランクを特定
   const maxRank = Math.max(...result.matchingItems.map(mi => parseInt(mi.id.charAt(0))));
@@ -74,8 +74,7 @@ function addPriorityInfo(result: StageResult): StageResult {
 
   return {
     ...result,
-    priorityItemId: priorityItems.length === 1 ? priorityItems[0].id : undefined,
-    minNeededOfMaxRank
+    priorityItemId: priorityItems.length === 1 ? priorityItems[0].id : undefined
   };
 }
 
@@ -131,7 +130,7 @@ export function getAvailableStageResults(
         matchingItems,
         otherDrops,
         worldLevel: stage.worldLevel
-      } as StageResult);
+      });
     });
 }
 
@@ -207,7 +206,7 @@ export function calculateRecommendedRoute(
       if (nextMask === mask) continue; // 新たにカバーできる素材がなければ計算をスキップ
 
       const nextCount = node.count + 1;
-      const nextWorldLevel = node.worldLevel + (stage.worldLevel ?? 0);
+      const nextWorldLevel = node.worldLevel + stage.worldLevel;
       const existing = dp.get(nextMask);
 
       // より良い経路（1. ステージ数が少ない、2. ワールドレベル合計が高い）が見つかれば更新する
@@ -274,9 +273,9 @@ function calculateGreedyRoute(
       });
 
       // 最も多く素材をカバーし、かつ難易度が高いステージを選ぶ
-      if (coverCount > maxCover || (coverCount === maxCover && (stage.worldLevel ?? 0) > maxWorldLevel)) {
+      if (coverCount > maxCover || (coverCount === maxCover && stage.worldLevel > maxWorldLevel)) {
         maxCover = coverCount;
-        maxWorldLevel = stage.worldLevel ?? 0;
+        maxWorldLevel = stage.worldLevel;
         bestStage = stage;
       }
     }
@@ -316,7 +315,7 @@ function finalizeRoute(
 
   return [...bestRoute]
     // 高難度ステージ（ワールドレベルが高い）から順に処理
-    .sort((a, b) => (b.worldLevel ?? 0) - (a.worldLevel ?? 0))
+    .sort((a, b) => b.worldLevel - a.worldLevel)
     .map(s => {
       // 現時点の残数（シミュレーション結果）でアイテムリストを更新し、すでに充足済みのものを除外
       const updatedItems = s.matchingItems

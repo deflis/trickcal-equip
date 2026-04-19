@@ -103,7 +103,7 @@ export const selectSortedAvailableStages = createSelector(
     return [...allStages].sort((a, b) => 
       b.matchingItems.length - a.matchingItems.length || 
       b.score - a.score || 
-      (b.worldLevel ?? 0) - (a.worldLevel ?? 0)
+      b.worldLevel - a.worldLevel
     );
   }
 );

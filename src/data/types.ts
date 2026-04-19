@@ -87,7 +87,6 @@ export type StageResult = {
   score: number;
   matchingItems: MatchingItem[];
   otherDrops?: OtherDrop[];
-  worldLevel?: number;
+  worldLevel: number;
   priorityItemId?: DropId;
-  minNeededOfMaxRank?: number;
 };
