@@ -85,60 +85,72 @@ export function getAvailableStageResults(
 
 /**
  * 与えられた候補ステージの中から、すべての不足素材を最小限のステージ数でカバーする最適なルートを計算します。
- * ビットマスクDPを使用して、最小ステージ数かつ高ワールドレベルの解を効率的に見つけます。
+ *
+ * アルゴリズム: ビットマスクDP（集合被覆問題）
+ *   各素材にビット位置を割り当て、「どの素材がカバーできたか」を整数1つで表現する。
+ *   dp[mask] = maskのビットに対応する素材をすべてカバーできるステージの最小リスト
+ *   全素材がカバーできた状態（allMask）の dp エントリが最終解となる。
+ *
+ * 優先基準（同じmaskへ複数の経路がある場合）:
+ *   1. ステージ数が少ない方
+ *   2. 同数ならワールドレベル合計が高い方（高難度ステージ優先 = 効率が良い傾向）
  */
 export function calculateRecommendedRoute(
   availableStages: StageResult[]
 ): StageResult[] {
+  // 候補ステージから入手可能な素材IDを列挙する
   const attainableItems = new Set<string>();
   availableStages.forEach(s => s.matchingItems.forEach(m => attainableItems.add(m.id)));
 
   if (attainableItems.size === 0) return [];
 
+  // 素材IDに 0..n-1 のインデックスを割り当てる（ビット位置として使用）
   const targetItems = Array.from(attainableItems);
   const n = targetItems.length;
+  // 全素材がカバーされた状態を表すビットマスク（n ビットすべて1）
   const allMask = (1 << n) - 1;
 
-  // dp[mask] = そのアイテムの組み合わせをカバーする最小のステージリスト
+  // dp[mask] = そのビットマスクに対応する素材をカバーする最小ステージリスト
   const dp = new Map<number, StageResult[]>();
-  dp.set(0, []);
+  dp.set(0, []); // 初期状態: 何もカバーしていない
 
-  // ステージごとにビットマスクを計算
+  // 各ステージが「どの素材をカバーするか」をビットマスクで事前計算する
   const stageData = availableStages.map(stage => {
     let mask = 0;
     stage.matchingItems.forEach(m => {
       const idx = targetItems.indexOf(m.id);
-      if (idx !== -1) mask |= (1 << idx);
+      if (idx !== -1) mask |= (1 << idx); // 対応ビットを立てる
     });
     return { stage, mask };
   }).filter(s => s.mask > 0);
 
-  // ステージを1つずつ考慮してDPテーブルを更新
+  // ステージを1つずつ考慮してDPテーブルを更新する
   for (const { stage, mask: sMask } of stageData) {
+    // イテレーション中に dp を変更すると無限ループになるためスナップショットを取る
     const currentEntries = Array.from(dp.entries());
-    
+
     for (const [mask, route] of currentEntries) {
-      const nextMask = mask | sMask;
-      if (nextMask === mask) continue;
+      const nextMask = mask | sMask; // このステージを追加した場合の新しいカバー状態
+      if (nextMask === mask) continue; // 新たにカバーできる素材がなければスキップ
 
       const nextRoute = [...route, stage];
       const existingRoute = dp.get(nextMask);
 
-      // 1. ステージ数が少ない
-      // 2. ステージ数が同じならワールドレベルの合計が高い
-      // 方を採用する
-      if (!existingRoute || 
+      // より良い経路（ステージ数少 > ワールドレベル合計高）であれば更新する
+      if (!existingRoute ||
           nextRoute.length < existingRoute.length ||
-          (nextRoute.length === existingRoute.length && 
+          (nextRoute.length === existingRoute.length &&
            getRouteWorldLevel(nextRoute) > getRouteWorldLevel(existingRoute))) {
         dp.set(nextMask, nextRoute);
       }
     }
   }
 
+  // 全素材をカバーする最適ルートを取得（到達不能なら空配列）
   const bestRoute = dp.get(allMask) || [];
 
   return bestRoute
+    // farmAmount: そのステージで最も必要数が多いアイテムの数 = 最低限の周回数の目安
     .map(s => ({
       ...s,
       farmAmount: Math.max(...s.matchingItems.map(m => m.needed))
