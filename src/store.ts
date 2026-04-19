@@ -78,7 +78,7 @@ export const useStore = create<AppState>()(
       })),
 
       clearItem: (id) => set((state) => ({
-        items: state.items.filter(i => i.id !== id)
+        items: state.items.map(i => i.id === id ? { ...i, req: 0 } : i).filter(i => i.req > 0 || i.held > 0)
       })),
 
       clearHolding: (id) => set((state) => ({
@@ -89,13 +89,13 @@ export const useStore = create<AppState>()(
         items: state.items.map(i => i.id === id ? { ...i, req: 0, held: Math.max(0, i.held - i.req) } : i).filter(i => i.req > 0 || i.held > 0)
       })),
 
-      clearAll: () => set({
-        items: [],
+      clearAll: () => set((state) => ({
+        items: state.items.map(i => ({ ...i, req: 0 })).filter(i => i.held > 0),
         selectedAttackType: 'all'
-      }),
+      })),
 
       clearRank: (rank) => set((state) => ({
-        items: state.items.filter(i => !i.id.startsWith(rank))
+        items: state.items.map(i => i.id.startsWith(rank) ? { ...i, req: 0 } : i).filter(i => i.req > 0 || i.held > 0)
       })),
 
       applyRankConfig: (selectedRank, selectedAttackType) => {

@@ -47,7 +47,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
             <button
               onClick={() => onClearItem(bp.id)}
               className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="必要数・所持数をリセット"
+              title="必要数をリセット"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>

@@ -4,8 +4,49 @@ import type { BlueprintId } from './types';
 
 describe('useStore', () => {
   beforeEach(() => {
-    const { clearAll } = useStore.getState();
+    // 完全にクリアするために setItems([]) を使用
+    const { setItems, setSelectedAttackType } = useStore.getState();
+    setItems([]);
+    setSelectedAttackType('all');
+  });
+
+  it('clearAll should reset requirements but keep holdings', () => {
+    const { updateReq, updateHolding, clearAll } = useStore.getState();
+    const id1 = '81' as BlueprintId;
+    const id2 = '82' as BlueprintId;
+    
+    updateReq(id1, 10);
+    updateHolding(id1, 5);
+    updateReq(id2, 20);
+    
     clearAll();
+    
+    const items = useStore.getState().items;
+    expect(items.find(i => i.id === id1)?.req).toBe(0);
+    expect(items.find(i => i.id === id1)?.held).toBe(5);
+    expect(items.find(i => i.id === id2)).toBeUndefined();
+  });
+
+  it('clearRank should reset requirements of a specific rank but keep holdings', () => {
+    const { updateReq, updateHolding, clearRank } = useStore.getState();
+    const id8 = '81' as BlueprintId;
+    const id7 = '71' as BlueprintId;
+    
+    updateReq(id8, 10);
+    updateHolding(id8, 5);
+    updateReq(id7, 10);
+    updateHolding(id7, 5);
+    
+    clearRank('8');
+    
+    const items = useStore.getState().items;
+    const item8 = items.find(i => i.id === id8);
+    expect(item8?.req).toBe(0);
+    expect(item8?.held).toBe(5);
+    
+    const item7 = items.find(i => i.id === id7);
+    expect(item7?.req).toBe(10);
+    expect(item7?.held).toBe(5);
   });
 
   it('updateReq should update requirement value', () => {
