@@ -151,9 +151,23 @@ export function getAvailableStageResults(
 export function calculateRecommendedRoute(
   availableStages: StageResult[]
 ): StageResult[] {
+  // 同じ素材の組み合わせを持つステージをグループ化し、最も効率の良い（ワールドレベルが高い）ものだけを残す
+  const uniqueStagesMap = new Map<string, StageResult>();
+  availableStages.forEach(stage => {
+    const key = getCombinationKey(stage.matchingItems);
+    if (key === "") return;
+
+    const existing = uniqueStagesMap.get(key);
+    if (!existing || stage.worldLevel > existing.worldLevel) {
+      uniqueStagesMap.set(key, stage);
+    }
+  });
+
+  const filteredStages = Array.from(uniqueStagesMap.values());
+
   // 候補ステージから入手可能な素材IDを列挙する
   const attainableItems = new Set<string>();
-  availableStages.forEach(s => s.matchingItems.forEach(m => attainableItems.add(m.id)));
+  filteredStages.forEach(s => s.matchingItems.forEach(m => attainableItems.add(m.id)));
 
   if (attainableItems.size === 0) return [];
 
@@ -163,7 +177,7 @@ export function calculateRecommendedRoute(
   
   // 素材数が多い場合は計算時間の増大を防ぐため貪欲法に切り替える（2^16 = 65536 通りの状態までを許容）
   if (n > 16) {
-    return calculateGreedyRoute(availableStages, targetItems);
+    return calculateGreedyRoute(filteredStages, targetItems);
   }
 
   // 全素材がカバーされた状態を表すビットマスク（n ビットすべて1）
@@ -184,7 +198,7 @@ export function calculateRecommendedRoute(
 
   // 各ステージが「どの素材をカバーするか」をビットマスクで事前計算する
   const targetMap = new Map(targetItems.map((id, i) => [id, i]));
-  const stageData = availableStages.map(stage => {
+  const stageData = filteredStages.map(stage => {
     let mask = 0;
     stage.matchingItems.forEach(m => {
       const idx = targetMap.get(m.id);
@@ -234,7 +248,7 @@ export function calculateRecommendedRoute(
   }
 
   // 抽出したステージ群を整形して返す
-  return finalizeRoute(bestRoute, availableStages);
+  return finalizeRoute(bestRoute, filteredStages);
 }
 
 /**
