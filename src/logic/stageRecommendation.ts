@@ -13,17 +13,17 @@ function addPriorityInfo(result: StageResult): StageResult {
 
   // 1. 最高ランクを特定
   const maxRank = Math.max(...result.matchingItems.map(mi => parseInt(mi.id.charAt(0))));
-  
+
   // 2. 最高ランクのアイテム群の中で、最小の必要数を特定
   const maxRankItems = result.matchingItems.filter(mi => parseInt(mi.id.charAt(0)) === maxRank);
   const minNeededOfMaxRank = Math.min(...maxRankItems.map(mi => mi.needed));
-  
-  // 3. 優先アイテム（そのステージで集めるべきターゲット）を特定
+
+  // 3. 優先アイテム（そのステージで集めるべきターゲット）を特定（タイの場合は先頭を採用）
   const priorityItems = maxRankItems.filter(mi => mi.needed === minNeededOfMaxRank);
-  
+
   return {
     ...result,
-    priorityItemId: priorityItems.length === 1 ? priorityItems[0].id : undefined,
+    priorityItemId: priorityItems[0]?.id,
     minNeededOfMaxRank
   };
 }
@@ -65,6 +65,14 @@ export function getAvailableStageResults(
       });
 
       if (matchingItems.length === 0) return null;
+
+      // 高ランク副産物を持つステージを優先するために小さなボーナスを加算
+      // 係数は必要アイテムscoreを超えないよう十分小さく設定
+      const BY_PRODUCT_WEIGHT = 0.01;
+      const maxByProductRank = otherDrops.length > 0
+        ? Math.max(...otherDrops.map(d => parseInt(d.id.charAt(0))))
+        : 0;
+      score += maxByProductRank * BY_PRODUCT_WEIGHT;
 
       const [w, n] = stage.id.split('-').map(Number);
       return addPriorityInfo({
