@@ -91,7 +91,6 @@ export const useStore = create<AppState>()(
 
       clearAll: () => set((state) => ({
         items: state.items.map(i => ({ ...i, req: 0 })).filter(i => i.held > 0),
-        selectedAttackType: 'all'
       })),
 
       clearRank: (rank) => set((state) => ({
