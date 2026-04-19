@@ -2,6 +2,7 @@ import { Header } from './components/Header';
 import { QuickActionPanel } from './components/QuickActionPanel';
 import { BlueprintList } from './components/BlueprintList';
 import { AnalysisPanel } from './components/AnalysisPanel';
+import { RegisteredStageList } from './components/RegisteredStageList';
 
 
 const App = () => {
@@ -22,6 +23,8 @@ const App = () => {
             <AnalysisPanel />
           </section>
         </div>
+
+        <RegisteredStageList />
 
       </div>
 
