@@ -127,7 +127,7 @@ export function calculateRecommendedRoute(
     count: number;       // 使用した合計ステージ数
     worldLevel: number;  // ワールドレベルの合計（優先順位の判定に使用）
     parentMask: number;  // 遷移前のビットマスク
-    stage: StageResult;  // この遷移（エッジ）で使用したステージ
+    stage: StageResult | null;  // この遷移（エッジ）で使用したステージ
   };
   const dp = new Map<number, DPNode>();
 
@@ -143,7 +143,7 @@ export function calculateRecommendedRoute(
   }).filter(s => s.mask > 0);
 
   // 初期状態: 何もカバーしていない（マスク0）
-  dp.set(0, { count: 0, worldLevel: 0, parentMask: -1, stage: null as any });
+  dp.set(0, { count: 0, worldLevel: 0, parentMask: -1, stage: null });
 
   // ステージを1つずつ考慮してDPテーブルを更新する
   for (const { stage, mask: sMask } of stageData) {
@@ -177,7 +177,7 @@ export function calculateRecommendedRoute(
   let curr = allMask;
   while (curr > 0) {
     const node = dp.get(curr);
-    if (!node) break;
+    if (!node || !node.stage) break;
     bestRoute.push(node.stage);
     curr = node.parentMask;
   }
