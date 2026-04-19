@@ -5,16 +5,16 @@ import type { StageResult } from '../data/types';
 
 describe('stageRecommendation Utility Functions', () => {
   const mockStages: StageResult[] = [
-    { id: '3-1', score: 10, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], otherDrops: [], worldLevel: 301 },
-    { id: '3-2', score: 10, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], otherDrops: [], worldLevel: 302 },
-    { id: '4-1', score: 20, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }, { id: '22', name: 'ItemB', needed: 10 }], otherDrops: [], worldLevel: 401 },
-    { id: '5-1', score: 5, matchingItems: [{ id: '23', name: 'ItemC', needed: 5 }], otherDrops: [], worldLevel: 501 },
+    { id: '3-1', score: 10, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], otherDrops: [] },
+    { id: '3-2', score: 10, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], otherDrops: [] },
+    { id: '4-1', score: 20, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }, { id: '22', name: 'ItemB', needed: 10 }], otherDrops: [] },
+    { id: '5-1', score: 5, matchingItems: [{ id: '23', name: 'ItemC', needed: 5 }], otherDrops: [] },
   ];
 
   describe('deduplicateStages', () => {
     it('同一の素材組み合わせを持つステージから、最もワールドレベルが高いものだけを残す', () => {
       // 3-1 と 3-2 は同じ素材セット (ItemA)
-      // 3-2 の方がレベルが高いので、3-1 が消えて 3-2 が残るはず
+      // 3-2 の方がレベルが高い (302 > 301) ので、3-1 が消えて 3-2 が残るはず
       const result = deduplicateStages(mockStages);
       
       const ids = result.map(s => s.id);

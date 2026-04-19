@@ -17,15 +17,14 @@ export const BLUEPRINT_MAP = new Map<BlueprintId, Blueprint>(
  */
 export const { STAGE_METADATA, STAGE_MAP, ITEM_TO_STAGES } = (() => {
   const metadata: (Stage & { 
-    id: `${World}-${WorldLevel}`, world: World, level: WorldLevel, worldLevel: number, dropSet: Set<BlueprintId> 
+    id: `${World}-${WorldLevel}`, world: World, level: WorldLevel, dropSet: Set<BlueprintId> 
   })[] = [];
-  const stageMap = new Map<string, typeof metadata[number]>();
-  const itemToStages = new Map<BlueprintId, string[]>();
+  const stageMap = new Map<`${World}-${WorldLevel}`, typeof metadata[number]>();
+  const itemToStages = new Map<BlueprintId, `${World}-${WorldLevel}`[]>();
 
   for (const world of rangeIterator(MIN_WORLD, MAX_WORLD)) {
     for (const level of rangeIterator(1, 10)) {
       const id = `${world}-${level}` as const;
-      const worldLevel = world * 100 + level;
       const stageData = STAGES_BY_WORLD[world][level];
 
       const stage = {
@@ -33,7 +32,6 @@ export const { STAGE_METADATA, STAGE_MAP, ITEM_TO_STAGES } = (() => {
         id,
         world,
         level,
-        worldLevel,
         dropSet: new Set(stageData.drops)
       };
 
@@ -60,6 +58,21 @@ export function getCombinationKey(items: MatchingItem[]): string {
 }
 
 /**
+ * ワールド番号とステージ番号から、比較・ソート用の数値を算出します。
+ */
+export function calculateWorldLevel(world: number, level: number): number {
+  return world * 100 + level;
+}
+
+/**
+ * ステージ ID ("13-1") を比較可能な数値 (1301) に変換します。
+ */
+export function getStageSortValue(id: `${number}-${number}`): number {
+  const [world, level] = id.split('-').map(Number);
+  return calculateWorldLevel(world, level);
+}
+
+/**
  * 同じ素材の組み合わせを持つステージ群から、最もワールドレベルが高いものだけを残します。
  */
 export function deduplicateStages(stages: StageResult[]): StageResult[] {
@@ -69,7 +82,7 @@ export function deduplicateStages(stages: StageResult[]): StageResult[] {
     if (key === "") return;
 
     const existing = uniqueMap.get(key);
-    if (!existing || stage.worldLevel > existing.worldLevel) {
+    if (!existing || getStageSortValue(stage.id) > getStageSortValue(existing.id)) {
       uniqueMap.set(key, stage);
     }
   });
@@ -83,7 +96,7 @@ export function sortStages(stages: StageResult[]): StageResult[] {
   return [...stages].sort((a, b) => 
     b.matchingItems.length - a.matchingItems.length || 
     b.score - a.score || 
-    b.worldLevel - a.worldLevel
+    getStageSortValue(b.id) - getStageSortValue(a.id)
   );
 }
 
@@ -124,12 +137,12 @@ export function getAvailableStageResults(
     }
   }
 
-  const maxWorldLevel = maxWorld * 100 + maxStageNum;
+  const maxWorldLevel = calculateWorldLevel(maxWorld, maxStageNum);
 
   // 候補ステージに対してのみ詳細な計算を行う
   return Array.from(candidateStageIds)
     .map(id => STAGE_MAP.get(id)!)
-    .filter(stage => stage.worldLevel <= maxWorldLevel)
+    .filter(stage => calculateWorldLevel(stage.world, stage.level) <= maxWorldLevel)
     .map(stage => {
       const matchingItems: MatchingItem[] = [];
       const otherDrops: OtherDrop[] = [];
@@ -156,8 +169,7 @@ export function getAvailableStageResults(
         id: stage.id,
         score,
         matchingItems,
-        otherDrops,
-        worldLevel: stage.worldLevel
+        otherDrops
       });
     });
 }
@@ -206,9 +218,9 @@ export function calculateRecommendedRoute(
    * 1つ前の状態（parentMask）とその時に使用したステージ（stage）のみを保持し、後で復元する
    */
   type DPNode = {
-    count: number;       // 使用した合計ステージ数
-    worldLevel: number;  // ワールドレベルの合計（優先順位の判定に使用）
-    parentMask: number;  // 遷移前のビットマスク
+    count: number;           // 使用した合計ステージ数
+    totalLevelValue: number; // ワールドレベル数値の合計（優先順位の判定に使用）
+    parentMask: number;      // 遷移前のビットマスク
     stage: StageResult | null;  // この遷移（エッジ）で使用したステージ
   };
   const dp = new Map<number, DPNode>();
@@ -225,7 +237,7 @@ export function calculateRecommendedRoute(
   }).filter(s => s.mask > 0);
 
   // 初期状態: 何もカバーしていない（マスク0）
-  dp.set(0, { count: 0, worldLevel: 0, parentMask: -1, stage: null });
+  dp.set(0, { count: 0, totalLevelValue: 0, parentMask: -1, stage: null });
 
   // ステージを1つずつ考慮してDPテーブルを更新する
   for (const { stage, mask: sMask } of stageData) {
@@ -237,16 +249,16 @@ export function calculateRecommendedRoute(
       if (nextMask === mask) continue; // 新たにカバーできる素材がなければ計算をスキップ
 
       const nextCount = node.count + 1;
-      const nextWorldLevel = node.worldLevel + stage.worldLevel;
+      const nextLevelValue = node.totalLevelValue + getStageSortValue(stage.id);
       const existing = dp.get(nextMask);
 
       // より良い経路（1. ステージ数が少ない、2. ワールドレベル合計が高い）が見つかれば更新する
       if (!existing ||
           nextCount < existing.count ||
-          (nextCount === existing.count && nextWorldLevel > existing.worldLevel)) {
+          (nextCount === existing.count && nextLevelValue > existing.totalLevelValue)) {
         dp.set(nextMask, {
           count: nextCount,
-          worldLevel: nextWorldLevel,
+          totalLevelValue: nextLevelValue,
           parentMask: mask,
           stage
         });
@@ -294,7 +306,7 @@ function calculateGreedyRoute(
   while (remaining.size > 0) {
     let bestStage: StageResult | null = null;
     let maxCover = 0;
-    let maxWorldLevel = -1;
+    let maxWorldLevelValue = -1;
 
     for (const { stage, itemIds } of stageData) {
       // このステージを追加することで、未カバーの素材がいくつ解決されるか
@@ -304,9 +316,10 @@ function calculateGreedyRoute(
       });
 
       // 最も多く素材をカバーし、かつ難易度が高いステージを選ぶ
-      if (coverCount > maxCover || (coverCount === maxCover && stage.worldLevel > maxWorldLevel)) {
+      const currentLevelValue = getStageSortValue(stage.id);
+      if (coverCount > maxCover || (coverCount === maxCover && currentLevelValue > maxWorldLevelValue)) {
         maxCover = coverCount;
-        maxWorldLevel = stage.worldLevel;
+        maxWorldLevelValue = currentLevelValue;
         bestStage = stage;
       }
     }
@@ -346,7 +359,7 @@ function finalizeRoute(
 
   return [...bestRoute]
     // 高難度ステージ（ワールドレベルが高い）から順に処理
-    .sort((a, b) => b.worldLevel - a.worldLevel)
+    .sort((a, b) => getStageSortValue(b.id) - getStageSortValue(a.id))
     .map(s => {
       // 現時点の残数（シミュレーション結果）でアイテムリストを更新し、すでに充足済みのものを除外
       const updatedItems = s.matchingItems
