@@ -893,7 +893,9 @@ export const STAGES_BY_WORLD = {
   },
   21: {
     1: {
-      drops: [// TODO: 21-1
+      drops: [
+        blueprints[6].sword,
+        blueprints[7].ring,
       ]
     },
     2: {
@@ -927,11 +929,15 @@ export const STAGES_BY_WORLD = {
       ]
     },
     7: {
-      drops: [// TODO: 21-7
+      drops: [
+        blueprints[6].boot,
+        blueprints[7].sword,
       ]
     },
     8: {
-      drops: [// TODO: 21-8
+      drops: [
+        blueprints[6].ring,
+        blueprints[7].ring,
       ]
     },
     9: {
@@ -998,6 +1004,8 @@ export const STAGES_BY_WORLD = {
     },
     9: {
       drops: [// TODO: 22-9
+        blueprints[6].ring,
+        blueprints[7].hat,
       ]
     },
     10: {
