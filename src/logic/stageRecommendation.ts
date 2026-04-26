@@ -211,84 +211,62 @@ export function getAvailableStageResults(
     });
 }
 
+// --- ビットマスクDP の型定義とコアロジック ---
+
+type DPNode = {
+  count: number;           // 使用した合計ステージ数
+  totalLevelValue: number; // ワールドレベル数値の合計
+  parentMask: number;      // 遷移前のビットマスク
+  parentPathIndex: number; // 遷移前のパスのインデックス
+  stage: StageResult | null;
+};
+
+type StageDataEntry = {
+  stage: StageResult;
+  mask: number;
+  levelValue: number;
+};
+
 /**
- * 与えられた候補ステージの中から、すべての不足素材を最小限のステージ数でカバーする最適なルートを計算します。
- *
- * アルゴリズム: ビットマスクDP（集合被覆問題） または 貪欲法（Greedy）
- *   - 素材の種類数が少ない場合（16種類以下）:
- *     ビットマスクDPを用いて、全素材をカバーする「理論上の最短（最小ステージ数）かつ最高効率」のルートを計算します。
- *     各素材にビット位置を割り当て、「どの素材がカバーできたか」を整数1つで表現します。
- *   - 素材の種類数が多い場合（17種類以上）:
- *     計算量が指数関数的に増大（2^n）するため、貪欲法に切り替えて、実用的な時間で近似解を求めます。
- *
- * 優先基準（同じカバー状態へ複数の経路がある場合）:
- *   1. ステージ数が少ない方（スタミナ効率）
- *   2. 同数ならワールドレベル合計が高い方（高難度ステージ優先 = 効率が良い傾向）
+ * ステージの全ドロップアイテム（不足リストに無いものも含む）のランク範囲を返す。
+ * matchingItemsではなくステージの実際のドロップを使用することで、
+ * 不足素材が1つだけの混合ステージが誤って同一ランクペアと判定されることを防ぐ。
  */
-export function calculateRecommendedRoute(
-  availableStages: StageResult[]
-): StageResult[][] {
-  // 1. 重複を解除 (計算量を減らすため、各組み合わせで最もワールドレベルが高いものだけを残す)
-  // ルート計算では副産物は考慮しない（効率を優先）
-  const filteredStages = deduplicateStagesForRoute(availableStages);
+function getStageDropRankRange(stage: StageResult): { minRank: RankId, maxRank: RankId } {
+  const stageInfo = STAGE_MAP.get(stage.id);
+  if (!stageInfo) return { minRank: 2, maxRank: 8 };
 
-  // 候補ステージから入手可能な素材IDを列挙する
-  const attainableItems = new Set<string>();
-  filteredStages.forEach(s => s.matchingItems.forEach(m => attainableItems.add(m.id)));
-
-  if (attainableItems.size === 0) return [];
-
-  // 素材IDに 0..n-1 のインデックスを割り当てる（ビット位置として使用）
-  const targetItems = Array.from(attainableItems);
-  const n = targetItems.length;
-
-  // 素材数が多い場合は計算時間の増大を防ぐため貪欲法に切り替える（2^16 = 65536 通りの状態までを許容）
-  if (n > 16) {
-    return [calculateGreedyRoute(filteredStages, targetItems)];
+  let minRank: RankId = 8;
+  let maxRank: RankId = 2;
+  for (const dropId of stageInfo.drops) {
+    const bp = BLUEPRINT_MAP.get(dropId);
+    if (!bp) continue;
+    if (bp.rank < minRank) minRank = bp.rank;
+    if (bp.rank > maxRank) maxRank = bp.rank;
   }
+  return { minRank, maxRank };
+}
 
-  // 全素材がカバーされた状態を表すビットマスク（n ビットすべて1）
-  const allMask = (1 << n) - 1;
-
-  // --- 最適化されたビットマスクDP ---
-  // 各マスクごとに上位K件の候補を保持する。フラット配列+挿入ソートで管理。
-  const K = 10;
-
-  type DPNode = {
-    count: number;           // 使用した合計ステージ数
-    totalLevelValue: number; // ワールドレベル数値の合計
-    parentMask: number;      // 遷移前のビットマスク
-    parentPathIndex: number; // 遷移前のパスのインデックス
-    stage: StageResult | null;
-  };
-
-  // 固定長配列でDPテーブルを管理（2^n要素）。undefinedはまだ到達していないマスク。
-  const totalStates = allMask + 1;
-  const dp: (DPNode[] | undefined)[] = new Array(totalStates);
-
-  // 各ステージが「どの素材をカバーするか」をビットマスクで事前計算する
-  // ワールドレベル値も事前計算してキャッシュする
-  const targetMap = new Map(targetItems.map((id, i) => [id, i]));
-  const stageData = filteredStages.map(stage => {
-    let mask = 0;
-    stage.matchingItems.forEach(m => {
-      const idx = targetMap.get(m.id);
-      if (idx !== undefined) mask |= (1 << idx); // 対応する素材のビットを立てる
-    });
-    return { stage, mask, levelValue: getRouteSortValue(stage) };
-  }).filter(s => s.mask > 0);
-
-  // 初期状態: 何もカバーしていない（マスク0）
-  dp[0] = [{ count: 0, totalLevelValue: 0, parentMask: -1, parentPathIndex: -1, stage: null }];
-
-  // マスク昇順DP: 小さいマスクから大きいマスクへ順に遷移する。
-  // マスク昇順なので、mask | sMask >= mask が常に成り立ち、
-  // 処理済みのマスクを書き換えることがないため、スナップショットが不要。
+/**
+ * ビットマスクDPのコア処理。
+ * 与えられたステージデータを使って、既存のDPテーブルの上に遷移を追加します。
+ *
+ * @param dp 既存のDPテーブル（破壊的に更新される）
+ * @param stageEntries DP遷移に使用するステージデータ
+ * @param totalStates DPテーブルの要素数 (2^n)
+ * @param K 各マスクごとに保持する候補数の上限
+ */
+function runBitmaskDP(
+  dp: (DPNode[] | undefined)[],
+  stageEntries: StageDataEntry[],
+  totalStates: number,
+  K: number,
+): void {
   for (let mask = 0; mask < totalStates; mask++) {
     const nodes = dp[mask];
     if (!nodes) continue;
 
-    for (const { stage, mask: sMask, levelValue } of stageData) {
+    for (const { stage, mask: sMask, levelValue } of stageEntries) {
       const nextMask = mask | sMask;
       if (nextMask === mask) continue; // 新たにカバーできる素材がなければスキップ
 
@@ -344,31 +322,209 @@ export function calculateRecommendedRoute(
       }
     }
   }
+}
 
-  // ルートの復元関数
-  const reconstructPath = (mask: number, index: number): StageResult[] => {
-    const path: StageResult[] = [];
-    let currMask = mask;
-    let currIdx = index;
-    while (currMask > 0) {
-      const node = dp[currMask]?.[currIdx];
-      if (!node || !node.stage) break;
-      path.push(node.stage);
-      const prevMask = node.parentMask;
-      const prevIdx = node.parentPathIndex;
-      currMask = prevMask;
-      currIdx = prevIdx;
+/**
+ * DPテーブルからルートを復元する。
+ */
+function reconstructPath(dp: (DPNode[] | undefined)[], mask: number, index: number): StageResult[] {
+  const path: StageResult[] = [];
+  let currMask = mask;
+  let currIdx = index;
+  while (currMask > 0) {
+    const node = dp[currMask]?.[currIdx];
+    if (!node || !node.stage) break;
+    path.push(node.stage);
+    const prevMask = node.parentMask;
+    const prevIdx = node.parentPathIndex;
+    currMask = prevMask;
+    currIdx = prevIdx;
+  }
+  return path;
+}
+
+/**
+ * 与えられた候補ステージの中から、すべての不足素材を最小限のステージ数でカバーする最適なルートを計算します。
+ *
+ * アルゴリズム: 階層的ビットマスクDP（集合被覆問題） または 貪欲法（Greedy）
+ *
+ * 階層的最適化:
+ *   各ランクの「同一ランク2個セット」ステージで先に最適解を確定し、
+ *   カバーされた素材を除外してから、次の下位ランクの探索に移ります。
+ *   例: ランク5素材 → World 15-16（ランク5×2）で3ステージで確定
+ *       ランク4素材 → World 11-12（ランク4×2）で3ステージで確定
+ *   混合ランクのステージ（World 13-14 のランク4+5）は、同一ランクペアで
+ *   カバーしきれなかった残りの素材に対してのみ使用されます。
+ *
+ *   - 素材の種類数が少ない場合（16種類以下）:
+ *     ビットマスクDPを用いて最適解を計算します。
+ *   - 素材の種類数が多い場合（17種類以上）:
+ *     貪欲法に切り替えます。
+ *
+ * 優先基準（同じカバー状態へ複数の経路がある場合）:
+ *   1. ステージ数が少ない方（スタミナ効率）
+ *   2. 同数ならワールドレベル合計が高い方（高難度ステージ優先 = 効率が良い傾向）
+ */
+export function calculateRecommendedRoute(
+  availableStages: StageResult[]
+): StageResult[][] {
+  // 1. 重複を解除 (計算量を減らすため、各組み合わせで最もワールドレベルが高いものだけを残す)
+  const filteredStages = deduplicateStagesForRoute(availableStages);
+
+  // 候補ステージから入手可能な素材IDを列挙する
+  const attainableItems = new Set<string>();
+  filteredStages.forEach(s => s.matchingItems.forEach(m => attainableItems.add(m.id)));
+
+  if (attainableItems.size === 0) return [];
+
+  const targetItems = Array.from(attainableItems);
+  const n = targetItems.length;
+
+  // 素材数が多い場合は貪欲法に切り替える
+  if (n > 16) {
+    return [calculateGreedyRoute(filteredStages, targetItems)];
+  }
+
+  // 各ステージのビットマスクとランク情報を事前計算
+  const targetMap = new Map(targetItems.map((id, i) => [id, i]));
+  const allStageData = filteredStages.map(stage => {
+    let mask = 0;
+    stage.matchingItems.forEach(m => {
+      const idx = targetMap.get(m.id);
+      if (idx !== undefined) mask |= (1 << idx);
+    });
+    const { minRank, maxRank } = getStageDropRankRange(stage);
+    return { stage, mask, levelValue: getRouteSortValue(stage), minRank, maxRank, isSameRankPair: minRank === maxRank };
+  }).filter(s => s.mask > 0);
+
+  // 同一ランクペアステージをランク別にグループ化
+  const sameRankPairGroups = new Map<RankId, StageDataEntry[]>();
+  for (const entry of allStageData) {
+    if (!entry.isSameRankPair) continue;
+    const group = sameRankPairGroups.get(entry.minRank) ?? [];
+    group.push(entry);
+    sameRankPairGroups.set(entry.minRank, group);
+  }
+
+  // 各ランクに属する素材のビットマスクを計算
+  const rankItemMasks = new Map<RankId, number>();
+  for (const [itemId, idx] of targetMap) {
+    const rank = getBlueprintRank(itemId as BlueprintId);
+    rankItemMasks.set(rank, (rankItemMasks.get(rank) ?? 0) | (1 << idx));
+  }
+
+  // 素材のランクを降順ソート
+  const sortedItemRanks = Array.from(rankItemMasks.keys()).sort((a, b) => b - a);
+
+  // --- Phase 1: 各ランクの同一ペアステージで独立に最適解を確定する ---
+  // 上位ランクから順に処理し、そのランクの素材を全カバーできた場合のみコミットする。
+  // 上位ランクが未カバーの場合、下位ランクもコミットしない（Phase 2で一括処理）。
+  const committedRoute: StageResult[] = [];
+  let coveredMask = 0;
+  let allHigherRanksCovered = true; // 上位ランクがすべてカバーされているか
+
+  for (const rank of sortedItemRanks) {
+    if (!allHigherRanksCovered) break; // 上位が未カバーなら以降もPhase 2に回す
+
+    const group = sameRankPairGroups.get(rank);
+    if (!group || group.length === 0) {
+      allHigherRanksCovered = false;
+      continue;
     }
-    return path;
-  };
 
-  const finalNodes = dp[allMask] ?? [];
+    const rankMask = rankItemMasks.get(rank) ?? 0;
+    const uncoveredRankMask = rankMask & ~coveredMask;
+    if (uncoveredRankMask === 0) continue;
 
-  // 上位5件のルートを返す
-  return finalNodes.slice(0, 5).map((_node, idx) => {
-    const route = reconstructPath(allMask, idx);
-    return finalizeRoute(route, filteredStages);
-  });
+    // このランクの素材のみを対象にした小さいDPを実行
+    const rankBits: number[] = [];
+    for (let i = 0; i < n; i++) {
+      if (uncoveredRankMask & (1 << i)) rankBits.push(i);
+    }
+    const m = rankBits.length;
+    const remapToSmall = new Map(rankBits.map((origBit, newIdx) => [origBit, newIdx]));
+
+    const smallGroupData: StageDataEntry[] = group.map(entry => {
+      let smallMask = 0;
+      for (const origBit of rankBits) {
+        if (entry.mask & (1 << origBit)) {
+          smallMask |= (1 << remapToSmall.get(origBit)!);
+        }
+      }
+      return { stage: entry.stage, mask: smallMask, levelValue: entry.levelValue };
+    }).filter(s => s.mask > 0);
+
+    if (smallGroupData.length === 0) {
+      allHigherRanksCovered = false;
+      continue;
+    }
+
+    const smallAllMask = (1 << m) - 1;
+    const smallTotalStates = smallAllMask + 1;
+    const K = 10;
+
+    const dp: (DPNode[] | undefined)[] = new Array(smallTotalStates);
+    dp[0] = [{ count: 0, totalLevelValue: 0, parentMask: -1, parentPathIndex: -1, stage: null }];
+
+    runBitmaskDP(dp, smallGroupData, smallTotalStates, K);
+
+    // 全素材カバーできたか確認
+    if (!dp[smallAllMask] || dp[smallAllMask]!.length === 0) {
+      allHigherRanksCovered = false;
+      continue;
+    }
+
+    // コミット
+    const route = reconstructPath(dp, smallAllMask, 0);
+    committedRoute.push(...route);
+
+    for (const origBit of rankBits) {
+      coveredMask |= (1 << origBit);
+    }
+  }
+
+  // --- Phase 2: 残りの素材を全ステージでDP ---
+  const allMask = (1 << n) - 1;
+  const remainingMask = allMask & ~coveredMask;
+
+  if (remainingMask > 0) {
+    // 残りの素材用に再マッピング
+    const remainingBits: number[] = [];
+    for (let i = 0; i < n; i++) {
+      if (remainingMask & (1 << i)) remainingBits.push(i);
+    }
+    const m = remainingBits.length;
+    const remapToSmall = new Map(remainingBits.map((origBit, newIdx) => [origBit, newIdx]));
+
+    // 全ステージを使用（同一ペア・混合問わず）
+    const smallStageData: StageDataEntry[] = allStageData.map(entry => {
+      let smallMask = 0;
+      for (const origBit of remainingBits) {
+        if (entry.mask & (1 << origBit)) {
+          smallMask |= (1 << remapToSmall.get(origBit)!);
+        }
+      }
+      return { stage: entry.stage, mask: smallMask, levelValue: entry.levelValue };
+    }).filter(s => s.mask > 0);
+
+    const smallAllMask = (1 << m) - 1;
+    const smallTotalStates = smallAllMask + 1;
+    const K = 10;
+
+    const dp: (DPNode[] | undefined)[] = new Array(smallTotalStates);
+    dp[0] = [{ count: 0, totalLevelValue: 0, parentMask: -1, parentPathIndex: -1, stage: null }];
+
+    runBitmaskDP(dp, smallStageData, smallTotalStates, K);
+
+    if (dp[smallAllMask] && dp[smallAllMask]!.length > 0) {
+      const route = reconstructPath(dp, smallAllMask, 0);
+      committedRoute.push(...route);
+    }
+  }
+
+  if (committedRoute.length === 0) return [];
+
+  return [finalizeRoute(committedRoute, filteredStages)];
 }
 
 /**
