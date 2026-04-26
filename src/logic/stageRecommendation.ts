@@ -39,7 +39,7 @@ export const { STAGE_METADATA, STAGE_MAP, ITEM_TO_STAGES } = (() => {
       stageMap.set(id, stage);
 
       stageData.drops.forEach(dropId => {
-        const stageIds = itemToStages.get(dropId) || [];
+        const stageIds = itemToStages.get(dropId) ?? [];
         stageIds.push(id);
         itemToStages.set(dropId, stageIds);
       });
@@ -78,7 +78,7 @@ export function deduplicateStagesForUI(stages: StageResult[]): StageResult[] {
   stages.forEach(stage => {
     if (stage.matchingItems.length === 0) return;
 
-    const allDrops = STAGE_MAP.get(stage.id)?.drops || [];
+    const allDrops = STAGE_MAP.get(stage.id)?.drops ?? [];
     const key = [...allDrops].sort().join(',');
 
     const existing = uniqueMap.get(key);
@@ -262,7 +262,7 @@ export function calculateRecommendedRoute(
         const nextCount = node.count + 1;
         const nextLevelValue = node.totalLevelValue + getStageSortValue(stage);
 
-        let nextNodes = dp.get(nextMask) || [];
+        let nextNodes = dp.get(nextMask) ?? [];
 
         // すでに同じ「ステージ数」と「合計レベル」の経路があれば追加しない（簡易的な重複排除）
         if (nextNodes.some(n => n.count === nextCount && n.totalLevelValue === nextLevelValue)) {
@@ -303,7 +303,7 @@ export function calculateRecommendedRoute(
     return path;
   };
 
-  const finalNodes = dp.get(allMask) || [];
+  const finalNodes = dp.get(allMask) ?? [];
 
   // 上位5件のルートを返す
   return finalNodes.slice(0, 5).map(node => {

@@ -92,7 +92,7 @@ export const selectPriorityItems = createSelector(
     return shortages
       .map(s => ({
         ...s,
-        name: BLUEPRINTS.find(b => b.id === s.id)?.name || s.id
+        name: BLUEPRINTS.find(b => b.id === s.id)?.name ?? s.id
       }))
       .sort((a, b) => b.amount - a.amount);
   }
