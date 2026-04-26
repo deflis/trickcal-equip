@@ -1,6 +1,7 @@
 import { range } from '../data/array';
 import { STAGES_BY_WORLD } from '../data/stages';
 import { MIN_WORLD, MAX_WORLD } from '../data/types';
+import { getBlueprintIcon, BLUEPRINTS } from '../data/blueprints';
 
 const groupedStages = range(MIN_WORLD, MAX_WORLD).map((world) => {
   const stages = range(1, 10).filter(stage => {
@@ -22,15 +23,34 @@ export const RegisteredStageList = () => {
         {groupedStages.map(([world, stageIds]) => (
           <div key={world} className="flex flex-col gap-1">
             <span className="text-[10px] font-bold text-slate-300">W{world}</span>
-            <div className="flex flex-wrap gap-1 max-w-50">
-              {stageIds.map(id => (
-                <span 
-                  key={id} 
-                  className="text-[10px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100"
-                >
-                  {world}-{id}
-                </span>
-              ))}
+            <div className="flex flex-wrap gap-1.5 max-w-[20rem]">
+              {stageIds.map(id => {
+                const stageData = STAGES_BY_WORLD[world as keyof typeof STAGES_BY_WORLD][id as keyof (typeof STAGES_BY_WORLD)[3]];
+                return (
+                  <div 
+                    key={id} 
+                    className="flex flex-col items-center gap-0.5 bg-slate-50 px-1.5 py-1 rounded border border-slate-100"
+                  >
+                    <span className="text-[9px] font-medium text-slate-400">
+                      {world}-{id}
+                    </span>
+                    <div className="flex gap-0.5">
+                      {stageData.drops.map((dropId, i) => {
+                        const blueprint = BLUEPRINTS.find(b => b.id === dropId)
+                        return (
+                          <img 
+                            key={i} 
+                            src={getBlueprintIcon(blueprint)} 
+                            alt={blueprint?.name ?? 'unknown'}
+                            title={blueprint?.name}
+                            className="w-4 h-4 object-contain opacity-80" 
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
