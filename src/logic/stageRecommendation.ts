@@ -1,8 +1,7 @@
 import { rangeIterator } from "../data/array";
 import { BLUEPRINTS } from "../data/blueprints";
 import { STAGES_BY_WORLD } from "../data/stages";
-import { parseSafeInt } from "../utils/number";
-import { type StageResult, type MatchingItem, type ShortageMap, type BlueprintId, type Blueprint, MIN_WORLD, MAX_WORLD, type Stage, type World, type WorldLevel } from "../data/types";
+import { type StageResult, type MatchingItem, type ShortageMap, type BlueprintId, type Blueprint, MIN_WORLD, MAX_WORLD, type Stage, type World, type WorldLevel, type RankId } from "../data/types";
 
 // --- 事前計算セクション ---
 
@@ -12,6 +11,14 @@ import { type StageResult, type MatchingItem, type ShortageMap, type BlueprintId
 export const BLUEPRINT_MAP = new Map<BlueprintId, Blueprint>(
   BLUEPRINTS.map(b => [b.id, b])
 );
+
+/**
+ * BlueprintIdからランクを取得する。BLUEPRINT_MAPから直接取得するため、
+ * parseSafeIntによる文字列パースを避ける。
+ */
+function getBlueprintRank(id: BlueprintId): RankId {
+  return BLUEPRINT_MAP.get(id)!.rank;
+}
 
 /**
  * ステージ情報を最適化したメタデータとインデックス
@@ -71,23 +78,32 @@ export function getStageSortValue(stage: StageResult): number {
 }
 
 /**
- * UI表示用に、必要なアイテムと副産物の組み合わせが全く同じステージのうち、最もレベルが高いものだけを抽出します。
- * 全く同じドロップ構成のステージが重複表示されるのを防ぎつつ、副産物が違うステージは残すために使用します。
+ * 重複排除の共通ロジック。keyFnでステージからキーを生成し、
+ * 同一キーのうち最もワールドレベルが高いものだけを残します。
  */
-export function deduplicateStagesForUI(stages: StageResult[]): StageResult[] {
+function deduplicateStages(stages: StageResult[], keyFn: (stage: StageResult) => string): StageResult[] {
   const uniqueMap = new Map<string, StageResult>();
-  stages.forEach(stage => {
-    if (stage.matchingItems.length === 0) return;
+  for (const stage of stages) {
+    if (stage.matchingItems.length === 0) continue;
 
-    const allDrops = STAGE_MAP.get(stage.id)?.drops ?? [];
-    const key = [...allDrops].sort().join(',');
-
+    const key = keyFn(stage);
     const existing = uniqueMap.get(key);
     if (!existing || getStageSortValue(stage) > getStageSortValue(existing)) {
       uniqueMap.set(key, stage);
     }
-  });
+  }
   return Array.from(uniqueMap.values());
+}
+
+/**
+ * UI表示用に、必要なアイテムと副産物の組み合わせが全く同じステージのうち、最もレベルが高いものだけを抽出します。
+ * 全く同じドロップ構成のステージが重複表示されるのを防ぎつつ、副産物が違うステージは残すために使用します。
+ */
+export function deduplicateStagesForUI(stages: StageResult[]): StageResult[] {
+  return deduplicateStages(stages, stage => {
+    const allDrops = STAGE_MAP.get(stage.id)?.drops ?? [];
+    return [...allDrops].sort().join(',');
+  });
 }
 
 /**
@@ -95,18 +111,9 @@ export function deduplicateStagesForUI(stages: StageResult[]): StageResult[] {
  * 計算量の爆発を防ぐため、副産物は考慮せずに純粋な探索空間を減らすために使用します。
  */
 export function deduplicateStagesForRoute(stages: StageResult[]): StageResult[] {
-  const uniqueMap = new Map<string, StageResult>();
-  stages.forEach(stage => {
-    if (stage.matchingItems.length === 0) return;
-
-    const key = stage.matchingItems.map(m => m.id).sort().join(',');
-
-    const existing = uniqueMap.get(key);
-    if (!existing || getStageSortValue(stage) > getStageSortValue(existing)) {
-      uniqueMap.set(key, stage);
-    }
-  });
-  return Array.from(uniqueMap.values());
+  return deduplicateStages(stages, stage =>
+    stage.matchingItems.map(m => m.id).sort().join(',')
+  );
 }
 
 /**
@@ -116,30 +123,30 @@ export function sortStages(stages: StageResult[]): StageResult[] {
   return stages.toSorted((a, b) => getStageSortValue(b) - getStageSortValue(a));
 }
 
+/**
+ * ステージ内のアイテムから優先アイテムを決定する。
+ * 最高ランク → 同ランクなら必要数が最も少ないものを優先する。
+ * 中間配列を作らず1パスで完了する。
+ */
 function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResult {
   if (result.matchingItems.length === 0) return result;
 
-  let priorityItem: MatchingItem & { rank: number } | undefined = undefined;
-  const items = result.matchingItems.map((mi) => ({
-    ...mi,
-    rank: parseSafeInt(mi.id.charAt(0))
-  }));
+  let priorityId: BlueprintId | undefined;
+  let bestRank = -1;
+  let bestNeeded = Infinity;
 
-  for (const mi of items) {
-    if (!priorityItem || mi.rank > priorityItem.rank) {
-      // より高いランクが見つかった場合、最優先を更新
-      priorityItem = mi;
-    } else if (mi.rank === priorityItem.rank) {
-      // 同じランクの場合、必要数がより少ないものを優先
-      if (priorityItem!.needed > mi.needed) {
-        priorityItem = mi;
-      }
+  for (const mi of result.matchingItems) {
+    const rank = getBlueprintRank(mi.id);
+    if (rank > bestRank || (rank === bestRank && mi.needed < bestNeeded)) {
+      bestRank = rank;
+      bestNeeded = mi.needed;
+      priorityId = mi.id;
     }
   }
 
   return {
     ...result,
-    priorityItemId: priorityItem?.id
+    priorityItemId: priorityId
   };
 }
 
@@ -244,6 +251,7 @@ export function calculateRecommendedRoute(
   const dp = new Map<number, DPNode[]>();
 
   // 各ステージが「どの素材をカバーするか」をビットマスクで事前計算する
+  // ワールドレベル値も事前計算してキャッシュする
   const targetMap = new Map(targetItems.map((id, i) => [id, i]));
   const stageData = filteredStages.map(stage => {
     let mask = 0;
@@ -251,14 +259,14 @@ export function calculateRecommendedRoute(
       const idx = targetMap.get(m.id);
       if (idx !== undefined) mask |= (1 << idx); // 対応する素材のビットを立てる
     });
-    return { stage, mask };
+    return { stage, mask, levelValue: getStageSortValue(stage) };
   }).filter(s => s.mask > 0);
 
   // 初期状態: 何もカバーしていない（マスク0）
   dp.set(0, [{ count: 0, totalLevelValue: 0, parentMask: -1, parentPathIndex: -1, stage: null }]);
 
   // ステージを1つずつ考慮してDPテーブルを更新する
-  for (const { stage, mask: sMask } of stageData) {
+  for (const { stage, mask: sMask, levelValue } of stageData) {
     // マップを反復しながら追加すると無限ループになるため、現在のエントリのスナップショットを取る
     const currentEntries = Array.from(dp.entries());
 
@@ -269,9 +277,9 @@ export function calculateRecommendedRoute(
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const nextCount = node.count + 1;
-        const nextLevelValue = node.totalLevelValue + getStageSortValue(stage);
+        const nextLevelValue = node.totalLevelValue + levelValue;
 
-        let nextNodes = dp.get(nextMask) ?? [];
+        const nextNodes = dp.get(nextMask) ?? [];
 
         // すでに同じ「ステージ数」と「合計レベル」の経路があれば追加しない（簡易的な重複排除）
         if (nextNodes.some(n => n.count === nextCount && n.totalLevelValue === nextLevelValue)) {
@@ -335,12 +343,13 @@ function calculateGreedyRoute(
   targetItems: string[]
 ): StageResult[] {
   const route: StageResult[] = [];
-  let remaining = new Set(targetItems); // まだカバーされていない素材のセット
+  const remaining = new Set(targetItems); // まだカバーされていない素材のセット
 
-  // 各ステージが持つ素材のIDセットを事前計算
+  // 各ステージが持つ素材のIDセットとワールドレベル値を事前計算
   const stageData = availableStages.map(stage => ({
     stage,
-    itemIds: new Set(stage.matchingItems.map(m => m.id))
+    itemIds: new Set(stage.matchingItems.map(m => m.id)),
+    levelValue: getStageSortValue(stage)
   }));
 
   // すべての素材がカバーされるまで繰り返す
@@ -349,7 +358,7 @@ function calculateGreedyRoute(
     let maxCover = 0;
     let maxWorldLevelValue = -1;
 
-    for (const { stage, itemIds } of stageData) {
+    for (const { stage, itemIds, levelValue } of stageData) {
       // このステージを追加することで、未カバーの素材がいくつ解決されるか
       let coverCount = 0;
       itemIds.forEach(id => {
@@ -357,10 +366,9 @@ function calculateGreedyRoute(
       });
 
       // 最も多く素材をカバーし、かつ難易度が高いステージを選ぶ
-      const currentLevelValue = getStageSortValue(stage);
-      if (coverCount > maxCover || (coverCount === maxCover && currentLevelValue > maxWorldLevelValue)) {
+      if (coverCount > maxCover || (coverCount === maxCover && levelValue > maxWorldLevelValue)) {
         maxCover = coverCount;
-        maxWorldLevelValue = currentLevelValue;
+        maxWorldLevelValue = levelValue;
         bestStage = stage;
       }
     }
@@ -373,6 +381,27 @@ function calculateGreedyRoute(
   }
 
   return finalizeRoute(route, availableStages);
+}
+
+/**
+ * ステージのソートメトリクスを事前計算する。
+ * ランク情報はBLUEPRINT_MAPから取得し、parseSafeIntを回避する。
+ */
+function getStageMetrics(stage: StageResult): { maxRank: number, minNeeded: number, levelValue: number } {
+  let maxRank = -1;
+  let minNeeded = Infinity;
+
+  for (const m of stage.matchingItems) {
+    const rank = getBlueprintRank(m.id);
+    if (rank > maxRank) {
+      maxRank = rank;
+      minNeeded = m.needed;
+    } else if (rank === maxRank && m.needed < minNeeded) {
+      minNeeded = m.needed;
+    }
+  }
+
+  return { maxRank, minNeeded, levelValue: getStageSortValue(stage) };
 }
 
 /**
@@ -398,24 +427,20 @@ function finalizeRoute(
     })
   );
 
-  return bestRoute
-    // ランクが高い > 必要数が少ない > ワールドレベルが高い 順にソート
-    .toSorted((a, b) => {
-      const getMetrics = (s: StageResult) => {
-        const maxRank = Math.max(...s.matchingItems.map(m => parseSafeInt(m.id.charAt(0))));
-        const minNeeded = Math.min(...s.matchingItems.filter(m => parseSafeInt(m.id.charAt(0)) === maxRank).map(m => m.needed));
-        return { maxRank, minNeeded };
-      };
-      const ma = getMetrics(a);
-      const mb = getMetrics(b);
+  // メトリクスを事前計算してソートする（比較関数内での重複計算を回避）
+  const stagesWithMetrics = bestRoute.map(s => ({
+    stage: s,
+    metrics: getStageMetrics(s)
+  }));
 
-      return (
-        mb.maxRank - ma.maxRank ||
-        ma.minNeeded - mb.minNeeded ||
-        getStageSortValue(b) - getStageSortValue(a)
-      );
-    })
-    .map(s => {
+  stagesWithMetrics.sort((a, b) =>
+    b.metrics.maxRank - a.metrics.maxRank ||
+    a.metrics.minNeeded - b.metrics.minNeeded ||
+    b.metrics.levelValue - a.metrics.levelValue
+  );
+
+  return stagesWithMetrics
+    .map(({ stage: s }) => {
       // 現時点の残数（シミュレーション結果）でアイテムリストを更新し、すでに充足済みのものを除外
       const updatedItems = s.matchingItems
         .map(m => ({ ...m, needed: remainingNeeded.get(m.id) ?? 0 }))
