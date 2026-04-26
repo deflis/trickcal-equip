@@ -2,6 +2,7 @@ import { Info } from 'lucide-react';
 import { useStore } from '../store';
 import { selectRecommendedStage, selectAllStages } from '../selectors';
 import type { StageResult } from '../data/types';
+import { getBlueprintIcon } from '../data/blueprints';
 
 interface StageListProps {
   activeTab: 'recommended' | 'all';
@@ -77,14 +78,16 @@ export const StageList = ({ activeTab }: StageListProps) => {
                     return (
                       <span
                         key={item.id}
-                        className={`text-[10px] border px-2 py-1 rounded-md shadow-sm font-bold transition-colors ${
+                        className={`flex items-center gap-1.5 text-[10px] border px-2 py-1 rounded-md shadow-sm font-bold transition-colors ${
                           isPriority
                             ? 'bg-amber-50 border-amber-200 text-amber-700 ring-1 ring-amber-500/20'
                             : 'bg-white border-slate-100 text-slate-600'
                         }`}
                       >
-                        {item.name} <span className={isPriority ? 'text-amber-600' : activeTab === 'recommended' ? 'text-emerald-600' : 'text-indigo-600'}>x{item.needed}</span>
-                        {isPriority && <span className="ml-1 text-[8px] opacity-70">★</span>}
+                        <img src={getBlueprintIcon(item)} alt={item.name} className="w-4 h-4 object-contain" />
+                        <span className="truncate max-w-20">{item.name}</span>
+                        <span className={isPriority ? 'text-amber-600' : activeTab === 'recommended' ? 'text-emerald-600' : 'text-indigo-600'}>x{item.needed}</span>
+                        {isPriority && <span className="ml-0.5 text-[8px] opacity-70">★</span>}
                       </span>
                     );
                   })}
@@ -92,15 +95,16 @@ export const StageList = ({ activeTab }: StageListProps) => {
 
                 {result.otherDrops && result.otherDrops.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-slate-50">
-                    <div className="text-[9px] font-bold text-slate-300 mb-1">
+                    <div className="text-[9px] font-bold text-slate-300 mb-1.5">
                       副産物
                     </div>
                     <div className="flex flex-wrap gap-1 opacity-70">
                       {result.otherDrops.map(item => (
                         <span
                           key={item.id}
-                          className="text-[9px] bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded text-slate-400"
+                          className="flex items-center gap-1 text-[9px] bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded text-slate-400"
                         >
+                          <img src={getBlueprintIcon(item)} alt={item.name} className="w-3 h-3 object-contain grayscale opacity-70" />
                           {item.name}
                         </span>
                       ))}

@@ -33,16 +33,16 @@ export const EQUIPS = {
 } as const satisfies Record<string, EquipTypeId>;
 
 export const BLUEPRINTS: Blueprint[] = range(2, MAX_RANK).reverse()
-    .flatMap(r =>
-      EQUIP_TYPES.map(type => ({
-        id: `${r}${type.id}` as `${RankId}${EquipTypeId}`,
-        name: `ランク${r} ${type.name}`,
-        rank: r,
-        type: type.name,
-        typeId: type.id,
-        attackType: type.attackType,
-      }))
-    );
+  .flatMap(r =>
+    EQUIP_TYPES.map(type => ({
+      id: `${r}${type.id}` as `${RankId}${EquipTypeId}`,
+      name: `ランク${r} ${type.name}`,
+      rank: r,
+      type: type.name,
+      typeId: type.id,
+      attackType: type.attackType,
+    }))
+  );
 
 export type BlueprintMap = {
   [key in RankId]: {
@@ -72,3 +72,6 @@ export const blueprints: BlueprintMap = range(2, MAX_RANK).reverse()
       }
     };
   }, {} as BlueprintMap);
+
+
+export const getBlueprintIcon = ({ id }: { id: string }) => `/src/assets/blueprints/${id}.webp`;

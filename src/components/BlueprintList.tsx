@@ -2,6 +2,7 @@ import { Filter, Trash2, Minus, Plus, Zap, Swords, Sparkles, Layers, Check, type
 import type { AttackType, RankKey, BlueprintWithState } from '../data/types';
 import { useStore } from '../store';
 import { selectMainItems, selectSubItems } from '../selectors';
+import { getBlueprintIcon } from '../data/blueprints';
 
 const RANKS = ['All', '8', '7', '6', '5', '4', '3', '2'] as const satisfies ("All" | RankKey)[];
 
@@ -37,11 +38,16 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
       }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className={`font-bold text-xs truncate ${shortage > 0 ? 'text-indigo-900' : isComplete ? 'text-green-800' : 'text-slate-700'}`}>
-            {bp.name}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="shrink-0 w-10 h-10 bg-white rounded-lg border border-slate-100 flex items-center justify-center p-0.5 shadow-sm">
+            <img src={getBlueprintIcon(bp)} alt={bp.name} className="w-full h-full object-contain" />
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Rank {bp.rank}</div>
+          <div className="flex-1 min-w-0">
+            <div className={`font-bold text-xs truncate ${shortage > 0 ? 'text-indigo-900' : isComplete ? 'text-green-800' : 'text-slate-700'}`}>
+              {bp.name}
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">Rank {bp.rank}</div>
+          </div>
         </div>
 
         {req > 0 && (
