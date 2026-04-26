@@ -261,7 +261,7 @@ describe('stageRecommendation Logic with Real Data', () => {
       // すべての素材がカバーされているか
       const coveredItems = new Set();
       route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
-      expect(coveredItems.size).toBe(7);
+      expect(coveredItems).toHaveLength(7);
     });
 
     it('同じ素材構成でも、よりワールドレベルが高い（後半の）ステージを優先する', () => {
@@ -402,7 +402,7 @@ describe('stageRecommendation Logic with Real Data', () => {
       // 6種すべてカバー
       const coveredItems = new Set<string>();
       route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
-      expect(coveredItems.size).toBe(6);
+      expect(coveredItems).toHaveLength(6);
     });
 
     it('ランク5+ランク4混合でも、ランク5は3ステージで完結しランク4と分離される', () => {
@@ -459,7 +459,7 @@ describe('stageRecommendation Logic with Real Data', () => {
       // 全素材がカバーされているか
       const coveredItems = new Set<string>();
       route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
-      expect(coveredItems.size).toBe(12); // ランク5×6 + ランク4×6
+      expect(coveredItems).toHaveLength(12); // ランク5×6 + ランク4×6
     });
 
     it('到達ワールドが28の場合、より上位のワールドのステージが優先される', () => {
@@ -496,7 +496,7 @@ describe('stageRecommendation Logic with Real Data', () => {
       // 全素材がカバーされているか
       const coveredItems = new Set<string>();
       route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
-      expect(coveredItems.size).toBe(12);
+      expect(coveredItems).toHaveLength(12);
     });
   });
 
@@ -525,7 +525,7 @@ describe('stageRecommendation Logic with Real Data', () => {
 
         const coveredItems = new Set();
         route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
-        expect(coveredItems.size).toBe(6);
+        expect(coveredItems).toHaveLength(6);
       });
     });
   });
