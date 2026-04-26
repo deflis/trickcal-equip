@@ -23,7 +23,7 @@ describe('stageRecommendation Utility Functions', () => {
       expect(ids).not.toContain('3-1');
       expect(ids).toContain('4-1');
       expect(ids).toContain('5-1');
-      expect(result.length).toBe(3);
+      expect(result).toHaveLength(3);
     });
   });
 
@@ -49,7 +49,7 @@ describe('stageRecommendation Utility Functions', () => {
 
       const result = deduplicateStagesForUI(stagesWithDifferentByproducts);
 
-      expect(result.length).toBe(2);
+      expect(result).toHaveLength(2);
       expect(result.map(s => s.id)).toContain('3-1');
       expect(result.map(s => s.id)).toContain('3-2');
     });
@@ -75,7 +75,7 @@ describe('stageRecommendation Utility Functions', () => {
       const result = deduplicateStagesForRoute(stagesWithDifferentByproducts);
 
       // 副産物を無視するため、3-2 (高レベル) だけが残る
-      expect(result.length).toBe(1);
+      expect(result).toHaveLength(1);
       expect(result[0].id).toBe('3-2');
     });
   });
@@ -488,7 +488,7 @@ describe('stageRecommendation Logic with Real Data', () => {
       const rank5Stages = route.filter(s =>
         s.matchingItems.some(m => m.id.startsWith('5'))
       );
-      expect(rank5Stages.length).toBe(3);
+      expect(rank5Stages).toHaveLength(3);
       rank5Stages.forEach(s => {
         expect(s.world).toBeGreaterThanOrEqual(15);
       });
@@ -521,7 +521,7 @@ describe('stageRecommendation Logic with Real Data', () => {
         const route = routes[0];
 
         // どのランク・タイプでも3ステージで網羅可能
-        expect(route.length).toBe(3);
+        expect(route).toHaveLength(3);
 
         const coveredItems = new Set();
         route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
