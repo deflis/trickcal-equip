@@ -1,22 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import { getAvailableStageResults, calculateRecommendedRoute, deduplicateStages, sortStages } from './stageRecommendation';
+import { getAvailableStageResults, calculateRecommendedRoute, deduplicateStagesForUI, deduplicateStagesForRoute, sortStages } from './stageRecommendation';
 import { blueprints } from '../data/blueprints';
 import { MAX_WORLD, type StageResult } from '../data/types';
 import { range } from '../data/array';
 
 describe('stageRecommendation Utility Functions', () => {
   const mockStages: StageResult[] = [
-    { id: '3-1', score: 10, matchingItems: [{ id: '21', needed: 10 }], otherDrops: [] },
-    { id: '3-2', score: 10, matchingItems: [{ id: '21', needed: 10 }], otherDrops: [] },
-    { id: '4-1', score: 20, matchingItems: [{ id: '21', needed: 10 }, { id: '22', needed: 10 }], otherDrops: [] },
-    { id: '5-1', score: 5, matchingItems: [{ id: '23', needed: 5 }], otherDrops: [] },
+    { id: '3-1', world: 3, level: 1, score: 10, matchingItems: [{ id: '21', needed: 10 }] },
+    { id: '3-2', world: 3, level: 2, score: 10, matchingItems: [{ id: '21', needed: 10 }] },
+    { id: '4-1', world: 4, level: 1, score: 20, matchingItems: [{ id: '21', needed: 10 }, { id: '22', needed: 10 }] },
+    { id: '5-1', world: 5, level: 1, score: 5, matchingItems: [{ id: '23', needed: 5 }] },
   ];
 
-  describe('deduplicateStages', () => {
+  describe('deduplicateStagesForRoute', () => {
     it('同一の素材組み合わせを持つステージから、最もワールドレベルが高いものだけを残す', () => {
       // 3-1 と 3-2 は同じ素材セット (ItemA) かつ副産物なし
       // 3-2 の方がレベルが高い (302 > 301) ので、3-1 が消えて 3-2 が残るはず
-      const result = deduplicateStages(mockStages);
+      const result = deduplicateStagesForRoute(mockStages);
       
       const ids = result.map(s => s.id);
       expect(ids).toContain('3-2');
@@ -25,47 +25,54 @@ describe('stageRecommendation Utility Functions', () => {
       expect(ids).toContain('5-1');
       expect(result.length).toBe(3);
     });
+  });
 
+  describe('deduplicateStagesForUI', () => {
     it('不足素材が同じでも副産物が異なる場合は別のステージとして扱う', () => {
+      // 3-1 と 3-2 は STAGES_BY_WORLD 上で異なるドロップを持つ
       const stagesWithDifferentByproducts: StageResult[] = [
         { 
           id: '3-1', 
+          world: 3,
+          level: 1,
           score: 10, 
-          matchingItems: [{ id: '21', needed: 10 }], 
-          otherDrops: [{ id: '22' }] 
+          matchingItems: [{ id: '21', needed: 10 }]
         },
         { 
           id: '3-2', 
+          world: 3,
+          level: 2,
           score: 10, 
-          matchingItems: [{ id: '21', needed: 10 }], 
-          otherDrops: [{ id: '23' }] 
+          matchingItems: [{ id: '21', needed: 10 }]
         },
       ];
 
-      const result = deduplicateStages(stagesWithDifferentByproducts);
+      const result = deduplicateStagesForUI(stagesWithDifferentByproducts);
       
       expect(result.length).toBe(2);
       expect(result.map(s => s.id)).toContain('3-1');
       expect(result.map(s => s.id)).toContain('3-2');
     });
 
-    it('includeOtherDrops: false の場合は副産物が異なっても同一とみなす', () => {
+    it('deduplicateStagesForRoute は副産物が異なっても同一とみなす', () => {
       const stagesWithDifferentByproducts: StageResult[] = [
         { 
           id: '3-1', 
+          world: 3,
+          level: 1,
           score: 10, 
-          matchingItems: [{ id: '21', needed: 10 }], 
-          otherDrops: [{ id: '22' }] 
+          matchingItems: [{ id: '21', needed: 10 }]
         },
         { 
           id: '3-2', 
+          world: 3,
+          level: 2,
           score: 10, 
-          matchingItems: [{ id: '21', needed: 10 }], 
-          otherDrops: [{ id: '23' }] 
+          matchingItems: [{ id: '21', needed: 10 }]
         },
       ];
 
-      const result = deduplicateStages(stagesWithDifferentByproducts, false);
+      const result = deduplicateStagesForRoute(stagesWithDifferentByproducts);
       
       // 副産物を無視するため、3-2 (高レベル) だけが残る
       expect(result.length).toBe(1);
@@ -90,9 +97,9 @@ describe('stageRecommendation Utility Functions', () => {
       // ランク8の素材B (必要2)
       // ランク5の素材C (必要1)
       const mockSelectedStages: StageResult[] = [
-        { id: '28-1', score: 10, matchingItems: [{ id: '81', needed: 10 }], otherDrops: [] },
-        { id: '27-10', score: 2, matchingItems: [{ id: '82', needed: 2 }], otherDrops: [] },
-        { id: '16-1', score: 1, matchingItems: [{ id: '51', needed: 1 }], otherDrops: [] },
+        { id: '28-1', world: 28, level: 1, score: 10, matchingItems: [{ id: '81', needed: 10 }] },
+        { id: '27-10', world: 27, level: 10, score: 2, matchingItems: [{ id: '82', needed: 2 }] },
+        { id: '16-1', world: 16, level: 1, score: 1, matchingItems: [{ id: '51', needed: 1 }] },
       ];
 
       // calculateRecommendedRoute 内部で行われる deduplicate や finalizeRoute の順序をシミュレート

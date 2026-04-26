@@ -1,7 +1,7 @@
 import { createSelector } from 'reselect';
 import type { AppState } from './store';
 import { BLUEPRINTS, RANK_CONFIG } from './data/blueprints';
-import { calculateRecommendedRoute, getAvailableStageResults, deduplicateStages, sortStages } from './logic/stageRecommendation';
+import { calculateRecommendedRoute, getAvailableStageResults, deduplicateStagesForUI, sortStages } from './logic/stageRecommendation';
 import type { ShortageItem, ShortageMap, BlueprintWithState, RankKey } from './data/types';
 
 const selectItems = (state: AppState) => state.items;
@@ -122,7 +122,7 @@ export const selectAllStages = createSelector(
 
     // 重複（同一構成）を隠す場合：
     // 1. まず同一ドロップ構成の重複を解除 (最善のワールドレベルのみ抽出)
-    const unique = deduplicateStages(allStages);
+    const unique = deduplicateStagesForUI(allStages);
 
     // 2. 抽出されたユニークなステージのみをソート
     return sortStages(unique);

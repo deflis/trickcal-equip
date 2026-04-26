@@ -77,14 +77,11 @@ export type MatchingItem = {
   needed: number;
 };
 
-export type OtherDrop = {
-  id: DropId;
-};
-
 export type StageResult = {
   id: `${World}-${WorldLevel}`;
+  world: World;
+  level: WorldLevel;
   score: number;
   matchingItems: MatchingItem[];
-  otherDrops?: OtherDrop[];
   priorityItemId?: DropId;
 };

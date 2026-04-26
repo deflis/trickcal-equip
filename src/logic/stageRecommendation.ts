@@ -1,7 +1,7 @@
 import { rangeIterator } from "../data/array";
 import { BLUEPRINTS } from "../data/blueprints";
 import { STAGES_BY_WORLD } from "../data/stages";
-import { type StageResult, type MatchingItem, type OtherDrop, type ShortageMap, type BlueprintId, type Blueprint, MIN_WORLD, MAX_WORLD, type Stage, type World, type WorldLevel } from "../data/types";
+import { type StageResult, type MatchingItem, type ShortageMap, type BlueprintId, type Blueprint, MIN_WORLD, MAX_WORLD, type Stage, type World, type WorldLevel } from "../data/types";
 
 // --- 事前計算セクション ---
 
@@ -53,11 +53,7 @@ export const { STAGE_METADATA, STAGE_MAP, ITEM_TO_STAGES } = (() => {
   };
 })();
 
-export function getCombinationKey(matching: MatchingItem[], other: OtherDrop[] = []): string {
-  const mKey = matching.map(m => m.id).sort().join(',');
-  const oKey = other.map(o => o.id).sort().join(',');
-  return `m:${mKey}|o:${oKey}`;
-}
+
 
 /**
  * ワールド番号とステージ番号から、比較・ソート用の数値を算出します。
@@ -75,15 +71,35 @@ export function getStageSortValue(id: `${number}-${number}`): number {
 }
 
 /**
- * 同じ素材の組み合わせを持つステージ群から、最もワールドレベルが高いものだけを残します。
- * @param includeOtherDrops 副産物も含めて別の組み合わせとみなすかどうか（UI表示用はtrue、ルート計算用はfalseを推奨）
+ * UI表示用に、必要なアイテムと副産物の組み合わせが全く同じステージのうち、最もレベルが高いものだけを抽出します。
+ * 全く同じドロップ構成のステージが重複表示されるのを防ぎつつ、副産物が違うステージは残すために使用します。
  */
-export function deduplicateStages(stages: StageResult[], includeOtherDrops = true): StageResult[] {
+export function deduplicateStagesForUI(stages: StageResult[]): StageResult[] {
   const uniqueMap = new Map<string, StageResult>();
   stages.forEach(stage => {
     if (stage.matchingItems.length === 0) return;
     
-    const key = getCombinationKey(stage.matchingItems, includeOtherDrops ? stage.otherDrops : []);
+    const allDrops = STAGE_MAP.get(stage.id)?.drops || [];
+    const key = [...allDrops].sort().join(',');
+
+    const existing = uniqueMap.get(key);
+    if (!existing || getStageSortValue(stage.id) > getStageSortValue(existing.id)) {
+      uniqueMap.set(key, stage);
+    }
+  });
+  return Array.from(uniqueMap.values());
+}
+
+/**
+ * ルート計算用に、必要なアイテムの組み合わせが同じステージのうち、最もレベルが高いものだけを抽出します。
+ * 計算量の爆発を防ぐため、副産物は考慮せずに純粋な探索空間を減らすために使用します。
+ */
+export function deduplicateStagesForRoute(stages: StageResult[]): StageResult[] {
+  const uniqueMap = new Map<string, StageResult>();
+  stages.forEach(stage => {
+    if (stage.matchingItems.length === 0) return;
+    
+    const key = stage.matchingItems.map(m => m.id).sort().join(',');
 
     const existing = uniqueMap.get(key);
     if (!existing || getStageSortValue(stage.id) > getStageSortValue(existing.id)) {
@@ -145,7 +161,6 @@ export function getAvailableStageResults(
     .filter(stage => calculateWorldLevel(stage.world, stage.level) <= maxWorldLevel)
     .map(stage => {
       const matchingItems: MatchingItem[] = [];
-      const otherDrops: OtherDrop[] = [];
       let score = 0;
 
       stage.drops.forEach(dropId => {
@@ -156,18 +171,15 @@ export function getAvailableStageResults(
             id: dropId,
             needed
           });
-        } else {
-          otherDrops.push({
-            id: dropId
-          });
         }
       });
 
       return addPriorityInfo({
         id: stage.id,
+        world: stage.world,
+        level: stage.level,
         score,
-        matchingItems,
-        otherDrops
+        matchingItems
       });
     });
 }
@@ -191,7 +203,7 @@ export function calculateRecommendedRoute(
 ): StageResult[] {
   // 1. 重複を解除 (計算量を減らすため、各組み合わせで最もワールドレベルが高いものだけを残す)
   // ルート計算では副産物は考慮しない（効率を優先）
-  const filteredStages = deduplicateStages(availableStages, false);
+  const filteredStages = deduplicateStagesForRoute(availableStages);
 
   // 候補ステージから入手可能な素材IDを列挙する
   const attainableItems = new Set<string>();
