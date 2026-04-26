@@ -40,7 +40,7 @@ export const RegisteredStageList = () => {
                         return (
                           <img 
                             key={i} 
-                            src={getBlueprintIcon(blueprint)} 
+                            src={getBlueprintIcon(blueprint!)} 
                             alt={blueprint?.name ?? 'unknown'}
                             title={blueprint?.name}
                             className="w-4 h-4 object-contain opacity-80" 
