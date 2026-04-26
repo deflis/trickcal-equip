@@ -37,12 +37,13 @@ export const RegisteredStageList = () => {
                     <div className="flex gap-0.5">
                       {stageData.drops.map((dropId, i) => {
                         const blueprint = BLUEPRINTS.find(b => b.id === dropId)
+                        if (!blueprint) return null;
                         return (
                           <img 
                             key={i} 
-                            src={getBlueprintIcon(blueprint!)} 
-                            alt={blueprint?.name ?? 'unknown'}
-                            title={blueprint?.name}
+                            src={getBlueprintIcon(blueprint)} 
+                            alt={blueprint.name}
+                            title={blueprint.name}
                             className="w-4 h-4 object-contain opacity-80" 
                           />
                         );
