@@ -78,6 +78,14 @@ export function getStageSortValue(stage: StageResult): number {
 }
 
 /**
+ * おすすめルート計算用のソート値。ワールドの高さを1000倍に重み付けすることで、
+ * 高ワールドのステージを強く優先し、副産物（ゴールド・モカロン等）の効率を最大化します。
+ */
+function getRouteSortValue(stage: StageResult): number {
+  return stage.world * 1000 + stage.level;
+}
+
+/**
  * 重複排除の共通ロジック。keyFnでステージからキーを生成し、
  * 同一キーのうち最もワールドレベルが高いものだけを残します。
  */
@@ -259,7 +267,7 @@ export function calculateRecommendedRoute(
       const idx = targetMap.get(m.id);
       if (idx !== undefined) mask |= (1 << idx); // 対応する素材のビットを立てる
     });
-    return { stage, mask, levelValue: getStageSortValue(stage) };
+    return { stage, mask, levelValue: getRouteSortValue(stage) };
   }).filter(s => s.mask > 0);
 
   // 初期状態: 何もカバーしていない（マスク0）
@@ -349,7 +357,7 @@ function calculateGreedyRoute(
   const stageData = availableStages.map(stage => ({
     stage,
     itemIds: new Set(stage.matchingItems.map(m => m.id)),
-    levelValue: getStageSortValue(stage)
+    levelValue: getRouteSortValue(stage)
   }));
 
   // すべての素材がカバーされるまで繰り返す
@@ -401,7 +409,7 @@ function getStageMetrics(stage: StageResult): { maxRank: number, minNeeded: numb
     }
   }
 
-  return { maxRank, minNeeded, levelValue: getStageSortValue(stage) };
+  return { maxRank, minNeeded, levelValue: getRouteSortValue(stage) };
 }
 
 /**
