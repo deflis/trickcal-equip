@@ -2,13 +2,13 @@ import { range } from "./array";
 import { MAX_RANK, type Blueprint, type EquipType, type EquipTypeId, type ItemConfig, type RankId, type RankKey } from "./types";
 
 export const RANK_CONFIG = {
-  '8': { main: 46, sub: 18 },
-  '7': { main: 42, sub: 0 },
-  '6': { main: 36, sub: 14 },
-  '5': { main: 30, sub: 12 },
-  '4': { main: 24, sub: 0 },
-  '3': { main: 18, sub: 0 },
-  '2': { main: 12, sub: 0 },
+  '8': { main: 46, sub: 18, josekiPerBlueprint: 24 },
+  '7': { main: 42, sub: 0, josekiPerBlueprint: 22 },
+  '6': { main: 36, sub: 14, josekiPerBlueprint: 14 },
+  '5': { main: 30, sub: 12, josekiPerBlueprint: 12 },
+  '4': { main: 24, sub: 0, josekiPerBlueprint: 10 },
+  '3': { main: 18, sub: 0, josekiPerBlueprint: 6 },
+  '2': { main: 12, sub: 0, josekiPerBlueprint: 5 },
   // ランク1は扱わない
 } as const satisfies Record<RankKey, ItemConfig>;
 

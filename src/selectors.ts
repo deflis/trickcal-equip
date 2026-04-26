@@ -1,8 +1,8 @@
 import { createSelector } from 'reselect';
 import type { AppState } from './store';
-import { BLUEPRINTS } from './data/blueprints';
+import { BLUEPRINTS, RANK_CONFIG } from './data/blueprints';
 import { calculateRecommendedRoute, getAvailableStageResults, deduplicateStages, sortStages } from './logic/stageRecommendation';
-import type { ShortageItem, ShortageMap, BlueprintWithState } from './data/types';
+import type { ShortageItem, ShortageMap, BlueprintWithState, RankKey } from './data/types';
 
 const selectItems = (state: AppState) => state.items;
 const selectSelectedRank = (state: AppState) => state.selectedRank;
@@ -67,6 +67,21 @@ export const selectShortages = createSelector(
       result.push({ id, amount });
     });
     return result;
+  }
+);
+
+/**
+ * 不足分を補うために必要な「定石」の合計数を計算する
+ */
+export const selectTotalJoseki = createSelector(
+  [selectShortages],
+  (shortages) => {
+    return shortages.reduce((total, s) => {
+      const bp = BLUEPRINTS.find(b => b.id === s.id);
+      if (!bp) return total;
+      const config = RANK_CONFIG[bp.rank.toString() as RankKey];
+      return total + (s.amount * config.josekiPerBlueprint);
+    }, 0);
   }
 );
 

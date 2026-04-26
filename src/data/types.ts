@@ -9,6 +9,7 @@ export type RankKey = `${RankId}`;
 export type ItemConfig = {
   main: number; // ランクごとの必要枚数
   sub: number;  // 1ランク下の装備の必要枚数
+  josekiPerBlueprint: number; // 設計図1枚あたりの定石数
 };
 export type EquipTypeId = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 

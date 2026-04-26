@@ -1,13 +1,15 @@
-import { MapPin, Zap, List } from 'lucide-react';
+import { MapPin, Zap, List, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { useStore } from '../store';
 import { StageList } from './StageList';
+import { selectTotalJoseki } from '../selectors';
 
 export const AnalysisPanel = () => {
   const maxWorld = useStore(state => state.maxWorld);
   const maxStageNum = useStore(state => state.maxStageNum);
   const showDuplicates = useStore(state => state.showDuplicates);
   const setShowDuplicates = useStore(state => state.setShowDuplicates);
+  const totalJoseki = useStore(selectTotalJoseki);
   const [activeTab, setActiveTab] = useState<'recommended' | 'all'>('recommended');
 
   return (
@@ -63,6 +65,24 @@ export const AnalysisPanel = () => {
     </div>
 
     <StageList activeTab={activeTab} />
+
+    {totalJoseki > 0 && (
+      <div className="mt-6 p-4 bg-linear-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-100 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="bg-amber-100 p-2 rounded-lg text-amber-600">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">定石代用</p>
+            <p className="text-xs text-amber-600/80 font-medium">不足分をすべて定石で賄う場合</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <span className="text-2xl font-black text-amber-600">{totalJoseki.toLocaleString()}</span>
+          <span className="text-xs font-bold text-amber-500 ml-1">個</span>
+        </div>
+      </div>
+    )}
   </div>
   );
 };

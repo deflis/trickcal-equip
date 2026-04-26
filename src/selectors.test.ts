@@ -1,10 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { selectShortages, selectAllStages } from './selectors';
+import { selectShortages, selectAllStages, selectTotalJoseki } from './selectors';
 import type { AppState } from './store';
 import type { BlueprintId } from './data/types';
 import { getCombinationKey } from './logic/stageRecommendation';
 
 describe('selectors', () => {
+  describe('selectTotalJoseki', () => {
+    it('should calculate total Joseki correctly', () => {
+      const id81 = '81' as BlueprintId; // Rank 8 (24 Joseki)
+      const id71 = '71' as BlueprintId; // Rank 7 (22 Joseki)
+
+      const state = {
+        items: [
+          { id: id81, req: 10, held: 5 }, // 5 * 24 = 120
+          { id: id71, req: 5, held: 3 },  // 2 * 22 = 44
+        ]
+      } as unknown as AppState;
+
+      const totalJoseki = selectTotalJoseki(state);
+      expect(totalJoseki).toBe(164);
+    });
+  });
+
   describe('selectShortages', () => {
     it('should calculate correct shortages based on items state', () => {
       const id1 = '81' as BlueprintId;
