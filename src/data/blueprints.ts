@@ -74,4 +74,4 @@ export const blueprints: BlueprintMap = range(2, MAX_RANK).reverse()
   }, {} as BlueprintMap);
 
 
-export const getBlueprintIcon = ({ id }: { id: string }) => `/src/assets/blueprints/${id}.webp`;
+export const getBlueprintIcon = ({ id }: { id: string }) => `/assets/blueprints/${id}.webp`;
