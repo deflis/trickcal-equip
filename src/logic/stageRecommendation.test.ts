@@ -6,10 +6,10 @@ import { range } from '../data/array';
 
 describe('stageRecommendation Utility Functions', () => {
   const mockStages: StageResult[] = [
-    { id: '3-1', score: 10, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], otherDrops: [] },
-    { id: '3-2', score: 10, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], otherDrops: [] },
-    { id: '4-1', score: 20, matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }, { id: '22', name: 'ItemB', needed: 10 }], otherDrops: [] },
-    { id: '5-1', score: 5, matchingItems: [{ id: '23', name: 'ItemC', needed: 5 }], otherDrops: [] },
+    { id: '3-1', score: 10, matchingItems: [{ id: '21', needed: 10 }], otherDrops: [] },
+    { id: '3-2', score: 10, matchingItems: [{ id: '21', needed: 10 }], otherDrops: [] },
+    { id: '4-1', score: 20, matchingItems: [{ id: '21', needed: 10 }, { id: '22', needed: 10 }], otherDrops: [] },
+    { id: '5-1', score: 5, matchingItems: [{ id: '23', needed: 5 }], otherDrops: [] },
   ];
 
   describe('deduplicateStages', () => {
@@ -31,14 +31,14 @@ describe('stageRecommendation Utility Functions', () => {
         { 
           id: '3-1', 
           score: 10, 
-          matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], 
-          otherDrops: [{ id: '22', name: 'ItemB' }] 
+          matchingItems: [{ id: '21', needed: 10 }], 
+          otherDrops: [{ id: '22' }] 
         },
         { 
           id: '3-2', 
           score: 10, 
-          matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], 
-          otherDrops: [{ id: '23', name: 'ItemC' }] 
+          matchingItems: [{ id: '21', needed: 10 }], 
+          otherDrops: [{ id: '23' }] 
         },
       ];
 
@@ -54,14 +54,14 @@ describe('stageRecommendation Utility Functions', () => {
         { 
           id: '3-1', 
           score: 10, 
-          matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], 
-          otherDrops: [{ id: '22', name: 'ItemB' }] 
+          matchingItems: [{ id: '21', needed: 10 }], 
+          otherDrops: [{ id: '22' }] 
         },
         { 
           id: '3-2', 
           score: 10, 
-          matchingItems: [{ id: '21', name: 'ItemA', needed: 10 }], 
-          otherDrops: [{ id: '23', name: 'ItemC' }] 
+          matchingItems: [{ id: '21', needed: 10 }], 
+          otherDrops: [{ id: '23' }] 
         },
       ];
 
@@ -90,9 +90,9 @@ describe('stageRecommendation Utility Functions', () => {
       // ランク8の素材B (必要2)
       // ランク5の素材C (必要1)
       const mockSelectedStages: StageResult[] = [
-        { id: '28-1', score: 10, matchingItems: [{ id: '81', name: 'Rank8-A', needed: 10 }], otherDrops: [] },
-        { id: '27-10', score: 2, matchingItems: [{ id: '82', name: 'Rank8-B', needed: 2 }], otherDrops: [] },
-        { id: '16-1', score: 1, matchingItems: [{ id: '51', name: 'Rank5-C', needed: 1 }], otherDrops: [] },
+        { id: '28-1', score: 10, matchingItems: [{ id: '81', needed: 10 }], otherDrops: [] },
+        { id: '27-10', score: 2, matchingItems: [{ id: '82', needed: 2 }], otherDrops: [] },
+        { id: '16-1', score: 1, matchingItems: [{ id: '51', needed: 1 }], otherDrops: [] },
       ];
 
       // calculateRecommendedRoute 内部で行われる deduplicate や finalizeRoute の順序をシミュレート

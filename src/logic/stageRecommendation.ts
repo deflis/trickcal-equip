@@ -154,13 +154,11 @@ export function getAvailableStageResults(
           score += needed;
           matchingItems.push({
             id: dropId,
-            name: BLUEPRINT_MAP.get(dropId)?.name,
             needed
           });
         } else {
           otherDrops.push({
-            id: dropId,
-            name: BLUEPRINT_MAP.get(dropId)?.name
+            id: dropId
           });
         }
       });

@@ -74,13 +74,11 @@ export type Worlds = {
 
 export type MatchingItem = {
   id: DropId;
-  name: string | undefined;
   needed: number;
 };
 
 export type OtherDrop = {
   id: DropId;
-  name: string | undefined;
 };
 
 export type StageResult = {
