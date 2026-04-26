@@ -119,19 +119,27 @@ export function sortStages(stages: StageResult[]): StageResult[] {
 function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResult {
   if (result.matchingItems.length === 0) return result;
 
-  // 1. 最高ランクを特定
-  const maxRank = Math.max(...result.matchingItems.map(mi => parseSafeInt(mi.id.charAt(0))));
+  let priorityItem: MatchingItem & { rank: number } | undefined = undefined;
+  const items = result.matchingItems.map((mi) => ({
+    ...mi,
+    rank: parseSafeInt(mi.id.charAt(0))
+  }));
 
-  // 2. 最高ランクのアイテム群の中で、最小の必要数を特定
-  const maxRankItems = result.matchingItems.filter(mi => parseSafeInt(mi.id.charAt(0)) === maxRank);
-  const minNeededOfMaxRank = Math.min(...maxRankItems.map(mi => mi.needed));
-
-  // 3. 優先アイテム（そのステージで集めるべきターゲット）を特定
-  const priorityItems = maxRankItems.filter(mi => mi.needed === minNeededOfMaxRank);
+  for (const mi of items) {
+    if (!priorityItem || mi.rank > priorityItem.rank) {
+      // より高いランクが見つかった場合、最優先を更新
+      priorityItem = mi;
+    } else if (mi.rank === priorityItem.rank) {
+      // 同じランクの場合、必要数がより少ないものを優先
+      if (priorityItem!.needed > mi.needed) {
+        priorityItem = mi;
+      }
+    }
+  }
 
   return {
     ...result,
-    priorityItemId: priorityItems.length === 1 ? priorityItems[0].id : undefined
+    priorityItemId: priorityItem?.id
   };
 }
 
