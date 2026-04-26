@@ -4,7 +4,6 @@ import type { IntClosedRange } from "type-fest";
 export const MIN_RANK = 2;
 export const MAX_RANK = 8;
 export type RankId = IntClosedRange<typeof MIN_RANK, typeof MAX_RANK>;
-export type RankKey = `${RankId}`;
 
 export type ItemConfig = {
   main: number; // ランクごとの必要枚数

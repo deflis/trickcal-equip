@@ -37,7 +37,7 @@ describe('useStore', () => {
     updateReq(id7, 10);
     updateHolding(id7, 5);
     
-    clearRank('8');
+    clearRank(8);
     
     const items = useStore.getState().items;
     const item8 = items.find(i => i.id === id8);

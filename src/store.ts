@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { AttackType, RankKey, BlueprintId, ItemState } from './data/types';
+import type { AttackType, BlueprintId, ItemState, RankId } from './data/types';
 import { BLUEPRINTS, RANK_CONFIG } from './data/blueprints';
 import { parseSafeInt } from './utils/number';
 
 export interface AppState {
   items: ItemState[];
-  selectedRank: string;
+  selectedRank: RankId | 'All';
   selectedAttackType: AttackType | 'all';
   maxWorld: number;
   maxStageNum: number;
@@ -15,7 +15,7 @@ export interface AppState {
 
   // Actions
   setItems: (items: ItemState[]) => void;
-  setSelectedRank: (rank: string) => void;
+  setSelectedRank: (rank: RankId | 'All') => void;
   setSelectedAttackType: (type: AttackType | 'all') => void;
   setMaxWorld: (world: number) => void;
   setMaxStageNum: (num: number) => void;
@@ -31,10 +31,10 @@ export interface AppState {
   clearHolding: (id: BlueprintId) => void;
   consumeHolding: (id: BlueprintId) => void;
   clearAll: () => void;
-  clearRank: (rank: string) => void;
-  clearRankWithSub: (rank: string) => void;
+  clearRank: (rank: RankId) => void;
+  clearRankWithSub: (rank: RankId) => void;
   
-  applyRankConfig: (rank: string, attackType: AttackType | 'all') => void;
+  applyRankConfig: (rank: RankId, attackType: AttackType | 'all') => void;
 }
 
 const updateItemInList = (items: ItemState[], id: BlueprintId, updater: (item: ItemState) => ItemState): ItemState[] => {
@@ -52,7 +52,7 @@ export const useStore = create<AppState>()(
   persist(
     (set) => ({
       items: [],
-      selectedRank: '8',
+      selectedRank: 8,
       selectedAttackType: 'all',
       maxWorld: 28,
       maxStageNum: 10,
@@ -106,23 +106,23 @@ export const useStore = create<AppState>()(
       })),
 
       clearRank: (rank) => set((state) => ({
-        items: state.items.map(i => i.id.startsWith(rank) ? { ...i, req: 0 } : i).filter(i => i.req > 0 || i.held > 0)
+        items: state.items.map(i => i.id.startsWith(String(rank)) ? { ...i, req: 0 } : i).filter(i => i.req > 0 || i.held > 0)
       })),
 
       clearRankWithSub: (rank) => set((state) => {
-        const subRank = String(parseSafeInt(rank) - 1);
+        const subRank = String(rank - 1);
+        const rankStr = String(rank);
         return {
           items: state.items.map(i =>
-            i.id.startsWith(rank) || i.id.startsWith(subRank) ? { ...i, req: 0 } : i
+            i.id.startsWith(rankStr) || i.id.startsWith(subRank) ? { ...i, req: 0 } : i
           ).filter(i => i.req > 0 || i.held > 0)
         };
       }),
 
-      applyRankConfig: (selectedRank, selectedAttackType) => {
-        if (selectedAttackType === 'all' || selectedRank === 'All') return;
+      applyRankConfig: (rank, selectedAttackType) => {
+        if (selectedAttackType === 'all') return;
         
-        const rank = parseSafeInt(selectedRank);
-        const config = RANK_CONFIG[selectedRank as RankKey];
+        const config = RANK_CONFIG[rank];
         if (!config) return;
 
         set((state) => {

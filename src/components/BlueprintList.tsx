@@ -1,11 +1,10 @@
 import { Filter, Trash2, Minus, Plus, Zap, Swords, Sparkles, Layers, Check, type LucideIcon } from 'lucide-react';
-import type { AttackType, RankKey, BlueprintWithState } from '../data/types';
+import type { AttackType, RankId, BlueprintWithState } from '../data/types';
 import { useStore } from '../store';
 import { selectMainItems, selectSubItems } from '../selectors';
 import { getBlueprintIcon } from '../data/blueprints';
-import { parseSafeInt } from '../utils/number';
 
-const RANKS = ['All', '8', '7', '6', '5', '4', '3', '2'] as const satisfies ("All" | RankKey)[];
+const RANKS: ('All' | RankId)[] = ['All', 8, 7, 6, 5, 4, 3, 2];
 
 const ATTACK_TYPES: { label: string; value: AttackType | 'all'; icon: LucideIcon }[] = [
   { label: 'すべて', value: 'all', icon: Layers },
@@ -158,17 +157,21 @@ export const BlueprintList = () => {
   const mainItems = useStore(selectMainItems);
   const subItems = useStore(selectSubItems);
 
-  const onRankChange = (newRank: string) => {
+  const onRankChange = (newRank: 'All' | RankId) => {
     setSelectedRank(newRank);
-    applyRankConfig(newRank, selectedAttackType);
+    if (newRank !== 'All') {
+      applyRankConfig(newRank, selectedAttackType);
+    }
   };
 
   const onAttackTypeChange = (type: AttackType | 'all') => {
     setSelectedAttackType(type);
-    applyRankConfig(selectedRank, type);
+    if (selectedRank !== 'All') {
+      applyRankConfig(selectedRank, type);
+    }
   };
 
-  const subRank = selectedRank !== 'All' ? parseSafeInt(selectedRank) - 1 : null;
+  const subRank = selectedRank !== 'All' ? selectedRank - 1 : null;
   const hasSubItems = subItems.length > 0;
 
   return (
@@ -217,7 +220,7 @@ export const BlueprintList = () => {
 
       <div className="space-y-4 max-h-125 overflow-y-auto pr-2 custom-scrollbar">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {mainItems.map(bp => (
+          {mainItems.map((bp: BlueprintWithState) => (
             <BlueprintCard key={bp.id} bp={bp} />
           ))}
         </div>
@@ -232,7 +235,7 @@ export const BlueprintList = () => {
               <div className="h-px flex-1 bg-slate-200" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {subItems.map(bp => (
+              {subItems.map((bp: BlueprintWithState) => (
                 <BlueprintCard key={bp.id} bp={bp} />
               ))}
             </div>

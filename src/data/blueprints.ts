@@ -1,16 +1,16 @@
 import { range } from "./array";
-import { MAX_RANK, type Blueprint, type EquipType, type EquipTypeId, type ItemConfig, type RankId, type RankKey } from "./types";
+import { MAX_RANK, type Blueprint, type BlueprintId, type EquipType, type EquipTypeId, type ItemConfig, type RankId } from "./types";
 
 export const RANK_CONFIG = {
-  '8': { main: 46, sub: 18, josekiPerBlueprint: 24 },
-  '7': { main: 42, sub: 0, josekiPerBlueprint: 22 },
-  '6': { main: 36, sub: 14, josekiPerBlueprint: 14 },
-  '5': { main: 30, sub: 12, josekiPerBlueprint: 12 },
-  '4': { main: 24, sub: 0, josekiPerBlueprint: 10 },
-  '3': { main: 18, sub: 0, josekiPerBlueprint: 6 },
-  '2': { main: 12, sub: 0, josekiPerBlueprint: 5 },
+  8: { main: 46, sub: 18, josekiPerBlueprint: 24 },
+  7: { main: 42, sub: 0, josekiPerBlueprint: 22 },
+  6: { main: 36, sub: 14, josekiPerBlueprint: 14 },
+  5: { main: 30, sub: 12, josekiPerBlueprint: 12 },
+  4: { main: 24, sub: 0, josekiPerBlueprint: 10 },
+  3: { main: 18, sub: 0, josekiPerBlueprint: 6 },
+  2: { main: 12, sub: 0, josekiPerBlueprint: 5 },
   // ランク1は扱わない
-} as const satisfies Record<RankKey, ItemConfig>;
+} as const satisfies Record<RankId, ItemConfig>;
 
 export const EQUIP_TYPES = [
   { id: 1, name: '鎧', attackType: 'both' },
@@ -35,7 +35,7 @@ export const EQUIPS = {
 export const BLUEPRINTS: Blueprint[] = range(2, MAX_RANK).reverse()
   .flatMap(r =>
     EQUIP_TYPES.map(type => ({
-      id: `${r}${type.id}` as `${RankId}${EquipTypeId}`,
+      id: `${r}${type.id}` as BlueprintId,
       name: `ランク${r} ${type.name}`,
       rank: r,
       type: type.name,

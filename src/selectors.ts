@@ -2,8 +2,7 @@ import { createSelector } from 'reselect';
 import type { AppState } from './store';
 import { BLUEPRINTS, RANK_CONFIG } from './data/blueprints';
 import { calculateRecommendedRoute, getAvailableStageResults, deduplicateStagesForUI, sortStages } from './logic/stageRecommendation';
-import { parseSafeInt } from './utils/number';
-import type { ShortageItem, ShortageMap, BlueprintWithState, RankKey } from './data/types';
+import type { ShortageItem, ShortageMap, BlueprintWithState } from './data/types';
 
 const selectItems = (state: AppState) => state.items;
 const selectSelectedRank = (state: AppState) => state.selectedRank;
@@ -81,7 +80,7 @@ export const selectTotalJoseki = createSelector(
     return shortages.reduce((total, s) => {
       const bp = BLUEPRINTS.find(b => b.id === s.id);
       if (!bp) return total;
-      const config = RANK_CONFIG[bp.rank.toString() as RankKey];
+      const config = RANK_CONFIG[bp.rank];
       return total + (s.amount * config.josekiPerBlueprint);
     }, 0);
   }
@@ -152,11 +151,11 @@ export const selectFilteredBlueprints = createSelector(
       const state = stateMap.get(b.id) ?? { req: 0, held: 0, shortage: 0, isComplete: false };
       return { ...b, ...state };
     }).filter(b => {
-      const subRank = selectedRank !== 'All' ? String(parseSafeInt(selectedRank) - 1) : null;
+      const subRank = selectedRank !== 'All' ? selectedRank - 1 : null;
 
       const matchesRank = selectedRank === 'All'
-        || b.rank.toString() === selectedRank
-        || (b.rank.toString() === subRank && b.req > 0);
+        || b.rank === selectedRank
+        || (subRank !== null && b.rank === subRank && b.req > 0);
 
       if (!matchesRank) return false;
 
@@ -171,16 +170,16 @@ export const selectFilteredBlueprints = createSelector(
 
 export const selectMainItems = createSelector(
   [selectFilteredBlueprints, selectSelectedRank],
-  (blueprints, selectedRank) => {
+  (blueprints: BlueprintWithState[], selectedRank) => {
     if (selectedRank === 'All') return blueprints;
-    return blueprints.filter(b => b.rank.toString() === selectedRank);
+    return blueprints.filter(b => b.rank === selectedRank);
   }
 );
 
 export const selectSubItems = createSelector(
   [selectFilteredBlueprints, selectSelectedRank],
-  (blueprints, selectedRank) => {
+  (blueprints: BlueprintWithState[], selectedRank) => {
     if (selectedRank === 'All') return [];
-    return blueprints.filter(b => b.rank.toString() !== selectedRank);
+    return blueprints.filter(b => b.rank !== selectedRank);
   }
 );

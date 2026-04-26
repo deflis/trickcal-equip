@@ -1,6 +1,6 @@
 import { Trophy, Sparkles, Trash2, RefreshCcw, CheckCircle2 } from 'lucide-react';
 import { BLUEPRINTS, RANK_CONFIG } from '../data/blueprints';
-import type { AttackType, Blueprint, BlueprintId, RankKey } from '../data/types';
+import type { AttackType, Blueprint, BlueprintId } from '../data/types';
 import { useStore } from '../store';
 import { parseSafeInt } from '../utils/number';
 
@@ -63,20 +63,22 @@ const CollectionModeSection = () => {
   const clearItem = useStore(s => s.clearItem);
 
   const hasRequirements = items.length > 0;
-  const config = selectedRank !== 'All' ? RANK_CONFIG[selectedRank as RankKey] : null;
+  const config = selectedRank !== 'All' ? RANK_CONFIG[selectedRank] : null;
   const hasSub = config ? config.sub > 0 : false;
   const isTypeSelected = selectedAttackType !== 'all';
 
   const targetBlueprints = isTypeSelected && selectedRank !== 'All'
     ? BLUEPRINTS.filter(b =>
-        b.rank === parseSafeInt(selectedRank) &&
+        b.rank === selectedRank &&
         (b.attackType === selectedAttackType || b.attackType === 'both')
       )
     : [];
 
   const handleAttackTypeSelect = (type: AttackType) => {
     setSelectedAttackType(type);
-    applyRankConfig(selectedRank, type);
+    if (selectedRank !== 'All') {
+      applyRankConfig(selectedRank, type);
+    }
   };
 
   const handleItemToggle = (bp: Blueprint, currentlyOn: boolean) => {
@@ -171,7 +173,7 @@ const CollectionModeSection = () => {
             <div className="flex items-center gap-4 text-[10px] opacity-70 font-bold text-amber-200">
               <span>R{selectedRank}: {config.main}枚</span>
               {hasSub && (
-                <span>R{parseSafeInt(selectedRank) - 1}: {config.sub}枚</span>
+                <span>R{selectedRank - 1}: {config.sub}枚</span>
               )}
             </div>
             <button
@@ -180,7 +182,7 @@ const CollectionModeSection = () => {
             >
               <RefreshCcw className="w-3 h-3" />
               {hasSub
-                ? `Rank ${selectedRank} + ${parseSafeInt(selectedRank) - 1} をクリア`
+                ? `Rank ${selectedRank} + ${selectedRank - 1} をクリア`
                 : `Rank ${selectedRank} をクリア`}
             </button>
           </div>
