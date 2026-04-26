@@ -246,9 +246,10 @@ export function calculateRecommendedRoute(
   // 全素材がカバーされた状態を表すビットマスク（n ビットすべて1）
   const allMask = (1 << n) - 1;
 
-  /**
-   * dp[mask] = そのビットマスクに対応する素材をカバーするための最適ノード（複数保持）
-   */
+  // --- 最適化されたビットマスクDP ---
+  // 各マスクごとに上位K件の候補を保持する。フラット配列+挿入ソートで管理。
+  const K = 10;
+
   type DPNode = {
     count: number;           // 使用した合計ステージ数
     totalLevelValue: number; // ワールドレベル数値の合計
@@ -256,7 +257,10 @@ export function calculateRecommendedRoute(
     parentPathIndex: number; // 遷移前のパスのインデックス
     stage: StageResult | null;
   };
-  const dp = new Map<number, DPNode[]>();
+
+  // 固定長配列でDPテーブルを管理（2^n要素）。undefinedはまだ到達していないマスク。
+  const totalStates = allMask + 1;
+  const dp: (DPNode[] | undefined)[] = new Array(totalStates);
 
   // 各ステージが「どの素材をカバーするか」をビットマスクで事前計算する
   // ワールドレベル値も事前計算してキャッシュする
@@ -271,42 +275,68 @@ export function calculateRecommendedRoute(
   }).filter(s => s.mask > 0);
 
   // 初期状態: 何もカバーしていない（マスク0）
-  dp.set(0, [{ count: 0, totalLevelValue: 0, parentMask: -1, parentPathIndex: -1, stage: null }]);
+  dp[0] = [{ count: 0, totalLevelValue: 0, parentMask: -1, parentPathIndex: -1, stage: null }];
 
-  // ステージを1つずつ考慮してDPテーブルを更新する
-  for (const { stage, mask: sMask, levelValue } of stageData) {
-    // マップを反復しながら追加すると無限ループになるため、現在のエントリのスナップショットを取る
-    const currentEntries = Array.from(dp.entries());
+  // マスク昇順DP: 小さいマスクから大きいマスクへ順に遷移する。
+  // マスク昇順なので、mask | sMask >= mask が常に成り立ち、
+  // 処理済みのマスクを書き換えることがないため、スナップショットが不要。
+  for (let mask = 0; mask < totalStates; mask++) {
+    const nodes = dp[mask];
+    if (!nodes) continue;
 
-    for (const [mask, nodes] of currentEntries) {
-      const nextMask = mask | sMask; // 現在の状態にこのステージを追加した後のカバー状態
-      if (nextMask === mask) continue; // 新たにカバーできる素材がなければ計算をスキップ
+    for (const { stage, mask: sMask, levelValue } of stageData) {
+      const nextMask = mask | sMask;
+      if (nextMask === mask) continue; // 新たにカバーできる素材がなければスキップ
 
       for (let i = 0; i < nodes.length; i++) {
         const node = nodes[i];
         const nextCount = node.count + 1;
         const nextLevelValue = node.totalLevelValue + levelValue;
 
-        const nextNodes = dp.get(nextMask) ?? [];
+        const nextNodes = dp[nextMask];
 
-        // すでに同じ「ステージ数」と「合計レベル」の経路があれば追加しない（簡易的な重複排除）
-        if (nextNodes.some(n => n.count === nextCount && n.totalLevelValue === nextLevelValue)) {
-          continue;
+        if (nextNodes) {
+          // 挿入位置を探す（ソート済み配列上で線形スキャン）
+          // 優先度: 1. ステージ数が少ない, 2. ワールドレベル合計が高い
+          let insertPos = nextNodes.length;
+          for (let j = 0; j < nextNodes.length; j++) {
+            const existing = nextNodes[j];
+            // 同一の(count, totalLevelValue)は重複排除
+            if (existing.count === nextCount && existing.totalLevelValue === nextLevelValue) {
+              insertPos = -1; // 重複マーカー
+              break;
+            }
+            if (nextCount < existing.count || (nextCount === existing.count && nextLevelValue > existing.totalLevelValue)) {
+              insertPos = j;
+              break;
+            }
+          }
+
+          if (insertPos === -1) continue; // 重複のためスキップ
+          if (insertPos >= K) continue; // K件以下の候補より劣るためスキップ
+
+          // 挿入ソート: 挿入位置にノードを差し込む
+          const newNode: DPNode = {
+            count: nextCount,
+            totalLevelValue: nextLevelValue,
+            parentMask: mask,
+            parentPathIndex: i,
+            stage
+          };
+          nextNodes.splice(insertPos, 0, newNode);
+
+          // K件を超えた分を切り捨て
+          if (nextNodes.length > K) nextNodes.length = K;
+        } else {
+          // このマスクに初めて到達
+          dp[nextMask] = [{
+            count: nextCount,
+            totalLevelValue: nextLevelValue,
+            parentMask: mask,
+            parentPathIndex: i,
+            stage
+          }];
         }
-
-        nextNodes.push({
-          count: nextCount,
-          totalLevelValue: nextLevelValue,
-          parentMask: mask,
-          parentPathIndex: i,
-          stage
-        });
-
-        // 優先度でソート: 1. ステージ数が少ない, 2. ワールドレベル合計が高い
-        nextNodes.sort((a, b) => a.count - b.count || b.totalLevelValue - a.totalLevelValue);
-
-        // 各マスクごとに上位10件を保持する
-        dp.set(nextMask, nextNodes.slice(0, 10));
       }
     }
   }
@@ -317,7 +347,7 @@ export function calculateRecommendedRoute(
     let currMask = mask;
     let currIdx = index;
     while (currMask > 0) {
-      const node = dp.get(currMask)?.[currIdx];
+      const node = dp[currMask]?.[currIdx];
       if (!node || !node.stage) break;
       path.push(node.stage);
       const prevMask = node.parentMask;
@@ -328,11 +358,11 @@ export function calculateRecommendedRoute(
     return path;
   };
 
-  const finalNodes = dp.get(allMask) ?? [];
+  const finalNodes = dp[allMask] ?? [];
 
   // 上位5件のルートを返す
-  return finalNodes.slice(0, 5).map(node => {
-    const route = reconstructPath(allMask, finalNodes.indexOf(node));
+  return finalNodes.slice(0, 5).map((_node, idx) => {
+    const route = reconstructPath(allMask, idx);
     return finalizeRoute(route, filteredStages);
   });
 }
