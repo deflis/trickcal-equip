@@ -2,6 +2,7 @@ import { createSelector } from 'reselect';
 import type { AppState } from './store';
 import { BLUEPRINTS, RANK_CONFIG } from './data/blueprints';
 import { calculateRecommendedRoute, getAvailableStageResults, deduplicateStagesForUI, sortStages } from './logic/stageRecommendation';
+import { parseSafeInt } from './utils/number';
 import type { ShortageItem, ShortageMap, BlueprintWithState, RankKey } from './data/types';
 
 const selectItems = (state: AppState) => state.items;
@@ -151,7 +152,7 @@ export const selectFilteredBlueprints = createSelector(
       const state = stateMap.get(b.id) ?? { req: 0, held: 0, shortage: 0, isComplete: false };
       return { ...b, ...state };
     }).filter(b => {
-      const subRank = selectedRank !== 'All' ? String(parseInt(selectedRank) - 1) : null;
+      const subRank = selectedRank !== 'All' ? String(parseSafeInt(selectedRank) - 1) : null;
 
       const matchesRank = selectedRank === 'All'
         || b.rank.toString() === selectedRank

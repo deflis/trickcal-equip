@@ -3,6 +3,7 @@ import type { AttackType, RankKey, BlueprintWithState } from '../data/types';
 import { useStore } from '../store';
 import { selectMainItems, selectSubItems } from '../selectors';
 import { getBlueprintIcon } from '../data/blueprints';
+import { parseSafeInt } from '../utils/number';
 
 const RANKS = ['All', '8', '7', '6', '5', '4', '3', '2'] as const satisfies ("All" | RankKey)[];
 
@@ -167,7 +168,7 @@ export const BlueprintList = () => {
     applyRankConfig(selectedRank, type);
   };
 
-  const subRank = selectedRank !== 'All' ? parseInt(selectedRank) - 1 : null;
+  const subRank = selectedRank !== 'All' ? parseSafeInt(selectedRank) - 1 : null;
   const hasSubItems = subItems.length > 0;
 
   return (

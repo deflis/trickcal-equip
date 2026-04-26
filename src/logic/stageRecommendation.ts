@@ -1,6 +1,7 @@
 import { rangeIterator } from "../data/array";
 import { BLUEPRINTS } from "../data/blueprints";
 import { STAGES_BY_WORLD } from "../data/stages";
+import { parseSafeInt } from "../utils/number";
 import { type StageResult, type MatchingItem, type ShortageMap, type BlueprintId, type Blueprint, MIN_WORLD, MAX_WORLD, type Stage, type World, type WorldLevel } from "../data/types";
 
 // --- 事前計算セクション ---
@@ -119,10 +120,10 @@ function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResu
   if (result.matchingItems.length === 0) return result;
 
   // 1. 最高ランクを特定
-  const maxRank = Math.max(...result.matchingItems.map(mi => parseInt(mi.id.charAt(0))));
+  const maxRank = Math.max(...result.matchingItems.map(mi => parseSafeInt(mi.id.charAt(0))));
 
   // 2. 最高ランクのアイテム群の中で、最小の必要数を特定
-  const maxRankItems = result.matchingItems.filter(mi => parseInt(mi.id.charAt(0)) === maxRank);
+  const maxRankItems = result.matchingItems.filter(mi => parseSafeInt(mi.id.charAt(0)) === maxRank);
   const minNeededOfMaxRank = Math.min(...maxRankItems.map(mi => mi.needed));
 
   // 3. 優先アイテム（そのステージで集めるべきターゲット）を特定
@@ -393,8 +394,8 @@ function finalizeRoute(
     // ランクが高い > 必要数が少ない > ワールドレベルが高い 順にソート
     .toSorted((a, b) => {
       const getMetrics = (s: StageResult) => {
-        const maxRank = Math.max(...s.matchingItems.map(m => parseInt(m.id.charAt(0))));
-        const minNeeded = Math.min(...s.matchingItems.filter(m => parseInt(m.id.charAt(0)) === maxRank).map(m => m.needed));
+        const maxRank = Math.max(...s.matchingItems.map(m => parseSafeInt(m.id.charAt(0))));
+        const minNeeded = Math.min(...s.matchingItems.filter(m => parseSafeInt(m.id.charAt(0)) === maxRank).map(m => m.needed));
         return { maxRank, minNeeded };
       };
       const ma = getMetrics(a);

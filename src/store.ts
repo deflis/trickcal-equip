@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AttackType, RankKey, BlueprintId, ItemState } from './data/types';
 import { BLUEPRINTS, RANK_CONFIG } from './data/blueprints';
+import { parseSafeInt } from './utils/number';
 
 export interface AppState {
   items: ItemState[];
@@ -71,7 +72,10 @@ export const useStore = create<AppState>()(
       })),
 
       setReqValue: (id, value) => set((state) => ({
-        items: updateItemInList(state.items, id, (i) => ({ ...i, req: Math.max(0, parseInt(value) || 0) }))
+        items: updateItemInList(state.items, id, (i) => ({
+          ...i,
+          req: Math.max(0, parseSafeInt(value))
+        }))
       })),
 
       updateHolding: (id, delta) => set((state) => ({
@@ -79,7 +83,10 @@ export const useStore = create<AppState>()(
       })),
 
       setHoldingValue: (id, value) => set((state) => ({
-        items: updateItemInList(state.items, id, (i) => ({ ...i, held: Math.max(0, parseInt(value) || 0) }))
+        items: updateItemInList(state.items, id, (i) => ({
+          ...i,
+          held: Math.max(0, parseSafeInt(value))
+        }))
       })),
 
       clearItem: (id) => set((state) => ({
@@ -103,7 +110,7 @@ export const useStore = create<AppState>()(
       })),
 
       clearRankWithSub: (rank) => set((state) => {
-        const subRank = String(parseInt(rank) - 1);
+        const subRank = String(parseSafeInt(rank) - 1);
         return {
           items: state.items.map(i =>
             i.id.startsWith(rank) || i.id.startsWith(subRank) ? { ...i, req: 0 } : i
@@ -114,7 +121,7 @@ export const useStore = create<AppState>()(
       applyRankConfig: (selectedRank, selectedAttackType) => {
         if (selectedAttackType === 'all' || selectedRank === 'All') return;
         
-        const rank = parseInt(selectedRank);
+        const rank = parseSafeInt(selectedRank);
         const config = RANK_CONFIG[selectedRank as RankKey];
         if (!config) return;
 

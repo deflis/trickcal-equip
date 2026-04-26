@@ -2,6 +2,7 @@ import { Trophy, Sparkles, Trash2, RefreshCcw, CheckCircle2 } from 'lucide-react
 import { BLUEPRINTS, RANK_CONFIG } from '../data/blueprints';
 import type { AttackType, Blueprint, BlueprintId, RankKey } from '../data/types';
 import { useStore } from '../store';
+import { parseSafeInt } from '../utils/number';
 
 const StageProgressInput = () => {
   const maxWorld = useStore(s => s.maxWorld);
@@ -26,7 +27,9 @@ const StageProgressInput = () => {
           <input
             type="number"
             value={maxWorld}
-            onChange={(e) => setMaxWorld(Math.max(1, parseInt(e.target.value) || 1))}
+            onChange={(e) => {
+              setMaxWorld(Math.max(1, parseSafeInt(e.target.value)));
+            }}
             className="bg-transparent w-10 text-center font-black text-amber-400 outline-none"
           />
         </div>
@@ -36,7 +39,9 @@ const StageProgressInput = () => {
           <input
             type="number"
             value={maxStageNum}
-            onChange={(e) => setMaxStageNum(Math.max(1, parseInt(e.target.value) || 1))}
+            onChange={(e) => {
+              setMaxStageNum(Math.max(1, parseSafeInt(e.target.value)));
+            }}
             className="bg-transparent w-8 text-center font-black text-amber-400 outline-none"
           />
         </div>
@@ -64,7 +69,7 @@ const CollectionModeSection = () => {
 
   const targetBlueprints = isTypeSelected && selectedRank !== 'All'
     ? BLUEPRINTS.filter(b =>
-        b.rank === parseInt(selectedRank) &&
+        b.rank === parseSafeInt(selectedRank) &&
         (b.attackType === selectedAttackType || b.attackType === 'both')
       )
     : [];
@@ -166,7 +171,7 @@ const CollectionModeSection = () => {
             <div className="flex items-center gap-4 text-[10px] opacity-70 font-bold text-amber-200">
               <span>R{selectedRank}: {config.main}枚</span>
               {hasSub && (
-                <span>R{parseInt(selectedRank) - 1}: {config.sub}枚</span>
+                <span>R{parseSafeInt(selectedRank) - 1}: {config.sub}枚</span>
               )}
             </div>
             <button
@@ -175,7 +180,7 @@ const CollectionModeSection = () => {
             >
               <RefreshCcw className="w-3 h-3" />
               {hasSub
-                ? `Rank ${selectedRank} + ${parseInt(selectedRank) - 1} をクリア`
+                ? `Rank ${selectedRank} + ${parseSafeInt(selectedRank) - 1} をクリア`
                 : `Rank ${selectedRank} をクリア`}
             </button>
           </div>
