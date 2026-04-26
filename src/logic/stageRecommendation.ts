@@ -142,6 +142,7 @@ function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResu
   let priorityId: BlueprintId | undefined;
   let bestRank = -1;
   let bestNeeded = Infinity;
+  let tieBreak = false;
 
   for (const mi of result.matchingItems) {
     const rank = getBlueprintRank(mi.id);
@@ -149,12 +150,15 @@ function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResu
       bestRank = rank;
       bestNeeded = mi.needed;
       priorityId = mi.id;
+      tieBreak = false;
+    } else if (rank === bestRank && mi.needed === bestNeeded) {
+      tieBreak = true;
     }
   }
 
   return {
     ...result,
-    priorityItemId: priorityId
+    priorityItemId: tieBreak ? undefined : priorityId
   };
 }
 
