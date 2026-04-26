@@ -300,6 +300,206 @@ describe('stageRecommendation Logic with Real Data', () => {
     });
   });
 
+  describe('上位ランク優先の段階的最適化', () => {
+    it('同一ランクのペアステージが、混合ランクのステージより優先される', () => {
+      // ランク8の鎧 + ランク8の剣 が不足
+      // ランク6の鎧 + ランク6の剣 も不足
+      // World 27-28 にはランク8同士のペアが多い
+      // World 25-26 にはランク7+ランク8の混合がある
+      // 期待: ランク8同士のステージ（World 27-28）が優先される
+      const shortages = new Map([
+        [blueprints[8].armor, 10],
+        [blueprints[8].sword, 10],
+        [blueprints[6].armor, 10],
+        [blueprints[6].sword, 10],
+      ]);
+
+      const results = getAvailableStageResults(shortages, MAX_WORLD, 10);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
+
+      // ルート内のステージを確認
+      // ランク8素材はWorld 27-28のステージでカバーされるべき
+      const rank8Stages = route.filter(s =>
+        s.matchingItems.some(m => m.id.startsWith('8'))
+      );
+      rank8Stages.forEach(s => {
+        expect(s.world).toBeGreaterThanOrEqual(27);
+      });
+    });
+
+    it('上位ランク同士のステージで先にカバーし、残りを混合ステージで補完する', () => {
+      // ランク8の全装備が不足
+      const shortages = new Map([
+        [blueprints[8].sword, 10],
+        [blueprints[8].armor, 10],
+        [blueprints[8].hat, 10],
+        [blueprints[8].boot, 10],
+        [blueprints[8].ring, 10],
+        [blueprints[8].accessory, 10],
+        [blueprints[8].wand, 10],
+      ]);
+
+      const results = getAvailableStageResults(shortages, MAX_WORLD, 10);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
+
+      // ランク8同士のペア（World 27-28）のステージが選択されているか
+      // World 27-28 のみで全7種をカバーできるはず
+      route.forEach(s => {
+        expect(s.world).toBeGreaterThanOrEqual(27);
+      });
+    });
+
+    it('ランク8とランク5の混合で、上位ランクのステージが先にカバーする', () => {
+      // ランク8の剣とランク5のブーツが不足
+      // 25-8 は ランク7アクセサリ + ランク8剣 をドロップ（混合）
+      // 28-1 は ランク8ブーツ + ランク8剣 をドロップ（同一ランク）
+      // 期待: ランク8同士のペアステージが先に選ばれる
+      const shortages = new Map([
+        [blueprints[8].sword, 10],
+        [blueprints[5].boot, 10],
+      ]);
+
+      const results = getAvailableStageResults(shortages, MAX_WORLD, 10);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
+
+      // 2ステージで構成される
+      expect(route.length).toBe(2);
+
+      // ランク8剣のステージはWorld 27-28のもの
+      const swordStage = route.find(s =>
+        s.matchingItems.some(m => m.id === blueprints[8].sword)
+      );
+      expect(swordStage).toBeDefined();
+      expect(swordStage!.world).toBeGreaterThanOrEqual(27);
+    });
+  });
+
+  describe('ランク5物理装備一式のルート検証', () => {
+    it('【前提】ランク5単体なら3ステージでWorld 15-16から全カバーできる', () => {
+      // ランク5物理装備一式のメイン素材のみ
+      // 例: 16-7(杖+アクセサリ), 16-4(指輪+ブーツ), 16-2(帽子+鎧) の3ステージで網羅
+      const shortages = new Map([
+        [blueprints[5].sword, 30],
+        [blueprints[5].armor, 30],
+        [blueprints[5].hat, 30],
+        [blueprints[5].boot, 30],
+        [blueprints[5].ring, 30],
+        [blueprints[5].accessory, 30],
+      ]);
+
+      const results = getAvailableStageResults(shortages, 16, 10);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
+
+      expect(route.length).toBe(3);
+      // すべてWorld 15-16のステージ
+      route.forEach(s => {
+        expect(s.world).toBeGreaterThanOrEqual(15);
+      });
+      // 6種すべてカバー
+      const coveredItems = new Set<string>();
+      route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
+      expect(coveredItems.size).toBe(6);
+    });
+
+    it('ランク5+ランク4混合でも、ランク5は3ステージで完結しランク4と分離される', () => {
+      // ランク5物理装備一式: メイン素材(ランク5)×30 + サブ素材(ランク4)×12
+      // ランク5: 剣, 鎧, 帽子, ブーツ, 指輪, アクセサリ
+      // ランク4: 剣, 鎧, 帽子, ブーツ, 指輪, アクセサリ
+      const shortages = new Map([
+        // ランク5メイン素材
+        [blueprints[5].sword, 30],
+        [blueprints[5].armor, 30],
+        [blueprints[5].hat, 30],
+        [blueprints[5].boot, 30],
+        [blueprints[5].ring, 30],
+        [blueprints[5].accessory, 30],
+        // ランク4サブ素材
+        [blueprints[4].sword, 12],
+        [blueprints[4].armor, 12],
+        [blueprints[4].hat, 12],
+        [blueprints[4].boot, 12],
+        [blueprints[4].ring, 12],
+        [blueprints[4].accessory, 12],
+      ]);
+
+      const results = getAvailableStageResults(shortages, 16, 10);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
+
+      // ランク5素材をドロップするステージを抽出
+      const rank5Stages = route.filter(s =>
+        s.matchingItems.some(m => m.id.startsWith('5'))
+      );
+      // ランク4素材をドロップするステージを抽出
+      const rank4Stages = route.filter(s =>
+        s.matchingItems.some(m => m.id.startsWith('4'))
+      );
+      // 合計6ステージになっている
+      expect(route).toHaveLength(6);
+      // そのうちランク5をドロップするステージは3つでカバーできる
+      expect(rank5Stages).toHaveLength(3);
+      // そのうちランク4をドロップするステージは3つでカバーできる
+      expect(rank4Stages).toHaveLength(3);
+
+      // ランク5素材は World 15-16 の同一ランクペアステージでカバーされるべき
+      // World 13-14 の混合ステージ（ランク4+ランク5）ではなく
+      rank5Stages.forEach(s => {
+        // ランク5のみを含むステージは World 15-16 であるべき
+        const hasOnlyRank5 = s.matchingItems.every(m => m.id.startsWith('5'));
+        if (hasOnlyRank5) {
+          expect(s.world, `ステージ ${s.id} はランク5のみなので World 15-16 であるべき`)
+            .toBeGreaterThanOrEqual(15);
+        }
+      });
+
+      // 全素材がカバーされているか
+      const coveredItems = new Set<string>();
+      route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
+      expect(coveredItems.size).toBe(12); // ランク5×6 + ランク4×6
+    });
+
+    it('到達ワールドが28の場合、より上位のワールドのステージが優先される', () => {
+      // 到達World 28の場合、ランク5素材は World 17-18 (ランク5+6混合) でもドロップする
+      // しかし同一ランクペアの World 15-16 が先に選ばれるべき
+      const shortages = new Map([
+        [blueprints[5].sword, 30],
+        [blueprints[5].armor, 30],
+        [blueprints[5].hat, 30],
+        [blueprints[5].boot, 30],
+        [blueprints[5].ring, 30],
+        [blueprints[5].accessory, 30],
+        [blueprints[4].sword, 12],
+        [blueprints[4].armor, 12],
+        [blueprints[4].hat, 12],
+        [blueprints[4].boot, 12],
+        [blueprints[4].ring, 12],
+        [blueprints[4].accessory, 12],
+      ]);
+
+      const results = getAvailableStageResults(shortages, MAX_WORLD, 10);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
+
+      // ランク5は3ステージ、すべてWorld 15-16の同一ランクペア
+      const rank5Stages = route.filter(s =>
+        s.matchingItems.some(m => m.id.startsWith('5'))
+      );
+      expect(rank5Stages.length).toBe(3);
+      rank5Stages.forEach(s => {
+        expect(s.world).toBeGreaterThanOrEqual(15);
+      });
+
+      // 全素材がカバーされているか
+      const coveredItems = new Set<string>();
+      route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
+      expect(coveredItems.size).toBe(12);
+    });
+  });
+
   // ランク3以外の装備では必ず全装備をカバーできるルートがあるらしい
   describe.each([2, ...range(4, 8)] as const)('ランク%dの', (rank) => {
     describe.each(['物理', '魔法'] as const)('%s装備一式は', (type) => {
