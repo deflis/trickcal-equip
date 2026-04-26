@@ -10,6 +10,7 @@ export interface AppState {
   maxWorld: number;
   maxStageNum: number;
   showDuplicates: boolean;
+  selectedRouteIndex: number;
 
   // Actions
   setItems: (items: ItemState[]) => void;
@@ -18,6 +19,7 @@ export interface AppState {
   setMaxWorld: (world: number) => void;
   setMaxStageNum: (num: number) => void;
   setShowDuplicates: (show: boolean) => void;
+  setSelectedRouteIndex: (index: number) => void;
 
   updateReq: (id: BlueprintId, delta: number) => void;
   setReqValue: (id: BlueprintId, value: string) => void;
@@ -54,6 +56,7 @@ export const useStore = create<AppState>()(
       maxWorld: 28,
       maxStageNum: 10,
       showDuplicates: false,
+      selectedRouteIndex: 0,
 
       setItems: (items) => set({ items }),
       setSelectedRank: (selectedRank) => set({ selectedRank }),
@@ -61,6 +64,7 @@ export const useStore = create<AppState>()(
       setMaxWorld: (maxWorld) => set({ maxWorld }),
       setMaxStageNum: (maxStageNum) => set({ maxStageNum }),
       setShowDuplicates: (showDuplicates) => set({ showDuplicates }),
+      setSelectedRouteIndex: (selectedRouteIndex) => set({ selectedRouteIndex }),
 
       updateReq: (id, delta) => set((state) => ({
         items: updateItemInList(state.items, id, (i) => ({ ...i, req: Math.max(0, i.req + delta) }))

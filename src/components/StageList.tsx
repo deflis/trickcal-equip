@@ -1,9 +1,9 @@
 import { Info } from 'lucide-react';
 import { useStore } from '../store';
-import { selectRecommendedStage, selectAllStages } from '../selectors';
+import { selectRecommendedRoutes, selectAllStages, selectRecommendedStage } from '../selectors';
 import type { StageResult } from '../data/types';
 import { getBlueprintIcon } from '../data/blueprints';
-import { STAGE_MAP, BLUEPRINT_MAP } from '../logic/stageRecommendation';
+import { STAGE_MAP, BLUEPRINT_MAP, getStageSortValue } from '../logic/stageRecommendation';
 import type { BlueprintId, MatchingItem } from '../data/types';
 
 interface StageListProps {
@@ -95,9 +95,13 @@ const OtherDrops = ({ result }: { result: StageResult }) => {
 };
 
 export const StageList = ({ activeTab }: StageListProps) => {
-  const displayStages = useStore(state => 
-    activeTab === 'recommended' ? selectRecommendedStage(state) : selectAllStages(state)
-  );
+  const selectedRouteIndex = useStore(state => state.selectedRouteIndex);
+  const setSelectedRouteIndex = useStore(state => state.setSelectedRouteIndex);
+  const recommendedRoutes = useStore(selectRecommendedRoutes);
+  const recommendedStage = useStore(selectRecommendedStage);
+  const allStages = useStore(selectAllStages);
+
+  const displayStages = activeTab === 'all' ? allStages : recommendedStage;
 
   if (displayStages.length === 0) {
     return (
@@ -113,8 +117,41 @@ export const StageList = ({ activeTab }: StageListProps) => {
   return (
     <>
       {activeTab === 'recommended' && (
-        <div className="mb-4 p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-[11px] text-emerald-700 font-medium">
-          すべての必要アイテムを網羅する、最も効率的なステージの組み合わせです。
+        <div className="space-y-4 mb-6">
+          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-[11px] text-emerald-700 font-medium">
+            すべての必要アイテムを網羅する、効率的なステージの組み合わせです。
+          </div>
+
+          {recommendedRoutes.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {recommendedRoutes.map((rSet, i) => {
+                const totalLevel = rSet.reduce((sum, s) => sum + getStageSortValue(s), 0);
+                const avgLevel = Math.floor(totalLevel / rSet.length);
+                const isSelected = selectedRouteIndex === i;
+
+                return (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedRouteIndex(i)}
+                    className={`flex-shrink-0 px-4 py-2.5 rounded-xl border-2 transition-all text-left ${
+                      isSelected
+                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                        : 'bg-white border-emerald-100 text-emerald-700 hover:border-emerald-200'
+                    }`}
+                  >
+                    <div className="text-[10px] font-black uppercase tracking-wider opacity-80 mb-0.5">
+                      Candidate {i + 1}
+                    </div>
+                    <div className="flex items-center gap-2 font-bold text-xs">
+                      <span>{rSet.length} Stages</span>
+                      <span className="opacity-50 text-[10px]">|</span>
+                      <span>Avg. Lvl {avgLevel}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
       <div className="space-y-4">

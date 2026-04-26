@@ -17,7 +17,7 @@ describe('stageRecommendation Utility Functions', () => {
       // 3-1 と 3-2 は同じ素材セット (ItemA) かつ副産物なし
       // 3-2 の方がレベルが高い (302 > 301) ので、3-1 が消えて 3-2 が残るはず
       const result = deduplicateStagesForRoute(mockStages);
-      
+
       const ids = result.map(s => s.id);
       expect(ids).toContain('3-2');
       expect(ids).not.toContain('3-1');
@@ -31,24 +31,24 @@ describe('stageRecommendation Utility Functions', () => {
     it('不足素材が同じでも副産物が異なる場合は別のステージとして扱う', () => {
       // 3-1 と 3-2 は STAGES_BY_WORLD 上で異なるドロップを持つ
       const stagesWithDifferentByproducts: StageResult[] = [
-        { 
-          id: '3-1', 
+        {
+          id: '3-1',
           world: 3,
           level: 1,
-          score: 10, 
+          score: 10,
           matchingItems: [{ id: '21', needed: 10 }]
         },
-        { 
-          id: '3-2', 
+        {
+          id: '3-2',
           world: 3,
           level: 2,
-          score: 10, 
+          score: 10,
           matchingItems: [{ id: '21', needed: 10 }]
         },
       ];
 
       const result = deduplicateStagesForUI(stagesWithDifferentByproducts);
-      
+
       expect(result.length).toBe(2);
       expect(result.map(s => s.id)).toContain('3-1');
       expect(result.map(s => s.id)).toContain('3-2');
@@ -56,24 +56,24 @@ describe('stageRecommendation Utility Functions', () => {
 
     it('deduplicateStagesForRoute は副産物が異なっても同一とみなす', () => {
       const stagesWithDifferentByproducts: StageResult[] = [
-        { 
-          id: '3-1', 
+        {
+          id: '3-1',
           world: 3,
           level: 1,
-          score: 10, 
+          score: 10,
           matchingItems: [{ id: '21', needed: 10 }]
         },
-        { 
-          id: '3-2', 
+        {
+          id: '3-2',
           world: 3,
           level: 2,
-          score: 10, 
+          score: 10,
           matchingItems: [{ id: '21', needed: 10 }]
         },
       ];
 
       const result = deduplicateStagesForRoute(stagesWithDifferentByproducts);
-      
+
       // 副産物を無視するため、3-2 (高レベル) だけが残る
       expect(result.length).toBe(1);
       expect(result[0].id).toBe('3-2');
@@ -83,7 +83,7 @@ describe('stageRecommendation Utility Functions', () => {
   describe('sortStages', () => {
     it('ワールドレベル（進行度）の降順でソートされる', () => {
       const result = sortStages(mockStages);
-      
+
       // ワールドレベルが高い順に並ぶ
       expect(result[0].id).toBe('5-1');
       expect(result[1].id).toBe('4-1');
@@ -105,16 +105,17 @@ describe('stageRecommendation Utility Functions', () => {
       // calculateRecommendedRoute 内部で行われる deduplicate や finalizeRoute の順序をシミュレート
       // ここでは finalizeRoute (のソート部分) を直接呼び出すために、
       // calculateRecommendedRoute の戻り値を確認する
-      
-      const route = calculateRecommendedRoute(mockSelectedStages);
+
+      const routes = calculateRecommendedRoute(mockSelectedStages);
+      const route = routes[0];
 
       // 期待される順序:
       // 1位: 27-10 (ランク8, 必要数2) -> ランク8の中で最も必要数が少ない
       // 2位: 28-1  (ランク8, 必要数10) -> ランク8
       // 3位: 16-1  (ランク5, 必要数1)  -> ランクが低いので最後
-      
+
       const ids = route.map(r => r.id);
-      
+
       expect(ids[0]).toBe('27-10');
       expect(ids[1]).toBe('28-1');
       expect(ids[2]).toBe('16-1');
@@ -134,16 +135,17 @@ describe('stageRecommendation Logic with Real Data', () => {
 
       const results = getAvailableStageResults(shortages, 3, 10);
 
-      const route = calculateRecommendedRoute(results);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
 
       // 3-10 は 鎧(21) と 剣(26) をドロップする
       // 3-2, 3-5, 3-9 は 杖(27) をドロップする
       // 合計2ステージですべてカバーできるはず
       expect(route.length).toBe(2);
-      
+
       const ids = route.map(r => r.id);
       expect(ids).toContain('3-10'); // 鎧 + 剣を1つでカバーできる唯一のステージ
-      
+
       // 実際にすべての素材がカバーされているか確認
       const coveredItems = new Set();
       route.forEach(r => r.matchingItems.forEach(m => coveredItems.add(m.id)));
@@ -160,7 +162,8 @@ describe('stageRecommendation Logic with Real Data', () => {
 
       const results = getAvailableStageResults(shortages, 3, 10);
 
-      const route = calculateRecommendedRoute(results);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
 
       // 鎧(21) は 3-6 と 3-10 でドロップする
       // タイブレークにより、よりワールドレベルが高い 3-10 が選ばれるべき
@@ -179,8 +182,9 @@ describe('stageRecommendation Logic with Real Data', () => {
 
       const results = getAvailableStageResults(shortages, 13, 10);
 
-      const route = calculateRecommendedRoute(results);
-      
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
+
       // 13-1 が両方の不足素材をドロップするため、これ1つで済む
       expect(route.length).toBe(1);
       expect(route[0].id).toBe('13-1');
@@ -196,8 +200,9 @@ describe('stageRecommendation Logic with Real Data', () => {
 
       const results = getAvailableStageResults(shortages, 20, 10);
 
-      const route = calculateRecommendedRoute(results);
-      
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
+
       // ランク6鎧(61) は 19-1, 19-3, 19-4, 20-1, 20-2, 20-8 など多数にある
       // その中で最もレベルが高い 20-8 が選ばれるべき
       expect(route.length).toBe(1);
@@ -214,12 +219,13 @@ describe('stageRecommendation Logic with Real Data', () => {
 
       const results = getAvailableStageResults(shortages, 3, 10);
 
-      const route = calculateRecommendedRoute(results);
-      
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
+
       // ワールド3までしか行けないので、ランク2の剣だけが対象になる
       expect(route.length).toBe(1);
       expect(route[0].id).toBe('3-10'); // (3-1, 3-4, 3-8, 3-10 のうち最高レベル)
-      
+
       const covered = route[0].matchingItems.map(m => m.id);
       expect(covered).toContain(blueprints[2].sword);
       expect(covered).not.toContain(blueprints[8].sword);
@@ -241,7 +247,8 @@ describe('stageRecommendation Logic with Real Data', () => {
 
       const results = getAvailableStageResults(shortages, 20, 10);
 
-      const route = calculateRecommendedRoute(results);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
 
       // ワールド20のドロップ例:
       // 20-10: 剣 + ブーツ
@@ -267,7 +274,8 @@ describe('stageRecommendation Logic with Real Data', () => {
 
       const results = getAvailableStageResults(shortages, 20, 10);
 
-      const route = calculateRecommendedRoute(results);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
 
       expect(route.length).toBe(1);
       expect(route[0].id).toBe('20-8'); // 最も後半のステージ
@@ -282,7 +290,8 @@ describe('stageRecommendation Logic with Real Data', () => {
 
       const results = getAvailableStageResults(shortages, 20, 10);
 
-      const route = calculateRecommendedRoute(results);
+      const routes = calculateRecommendedRoute(results);
+      const route = routes[0];
 
       // 20-6 (アクセサリ+剣) が 20-7(杖+アクセサリ)+20-10(ブーツ+剣) などの組み合わせより優先されるはず
       // なぜなら20-6は1ステージで両方をカバーし、かつ剣(100)のドロップを最大化（スコア化）できるから
@@ -308,7 +317,8 @@ describe('stageRecommendation Logic with Real Data', () => {
 
 
         const results = getAvailableStageResults(shortages, MAX_WORLD, 10);
-        const route = calculateRecommendedRoute(results);
+        const routes = calculateRecommendedRoute(results);
+        const route = routes[0];
 
         // どのランク・タイプでも3ステージで網羅可能
         expect(route.length).toBe(3);

@@ -16,8 +16,8 @@ export const BLUEPRINT_MAP = new Map<BlueprintId, Blueprint>(
  * ステージ情報を最適化したメタデータとインデックス
  */
 export const { STAGE_METADATA, STAGE_MAP, ITEM_TO_STAGES } = (() => {
-  const metadata: (Stage & { 
-    id: `${World}-${WorldLevel}`, world: World, level: WorldLevel, dropSet: Set<BlueprintId> 
+  const metadata: (Stage & {
+    id: `${World}-${WorldLevel}`, world: World, level: WorldLevel, dropSet: Set<BlueprintId>
   })[] = [];
   const stageMap = new Map<`${World}-${WorldLevel}`, typeof metadata[number]>();
   const itemToStages = new Map<BlueprintId, `${World}-${WorldLevel}`[]>();
@@ -46,10 +46,10 @@ export const { STAGE_METADATA, STAGE_MAP, ITEM_TO_STAGES } = (() => {
     }
   }
 
-  return { 
-    STAGE_METADATA: metadata, 
-    STAGE_MAP: stageMap, 
-    ITEM_TO_STAGES: itemToStages 
+  return {
+    STAGE_METADATA: metadata,
+    STAGE_MAP: stageMap,
+    ITEM_TO_STAGES: itemToStages
   };
 })();
 
@@ -65,9 +65,8 @@ export function calculateWorldLevel(world: number, level: number): number {
 /**
  * ステージ ID ("13-1") を比較可能な数値 (1301) に変換します。
  */
-export function getStageSortValue(id: `${number}-${number}`): number {
-  const [world, level] = id.split('-').map(Number);
-  return calculateWorldLevel(world, level);
+export function getStageSortValue(stage: StageResult): number {
+  return calculateWorldLevel(stage.world, stage.level);
 }
 
 /**
@@ -78,12 +77,12 @@ export function deduplicateStagesForUI(stages: StageResult[]): StageResult[] {
   const uniqueMap = new Map<string, StageResult>();
   stages.forEach(stage => {
     if (stage.matchingItems.length === 0) return;
-    
+
     const allDrops = STAGE_MAP.get(stage.id)?.drops || [];
     const key = [...allDrops].sort().join(',');
 
     const existing = uniqueMap.get(key);
-    if (!existing || getStageSortValue(stage.id) > getStageSortValue(existing.id)) {
+    if (!existing || getStageSortValue(stage) > getStageSortValue(existing)) {
       uniqueMap.set(key, stage);
     }
   });
@@ -98,11 +97,11 @@ export function deduplicateStagesForRoute(stages: StageResult[]): StageResult[] 
   const uniqueMap = new Map<string, StageResult>();
   stages.forEach(stage => {
     if (stage.matchingItems.length === 0) return;
-    
+
     const key = stage.matchingItems.map(m => m.id).sort().join(',');
 
     const existing = uniqueMap.get(key);
-    if (!existing || getStageSortValue(stage.id) > getStageSortValue(existing.id)) {
+    if (!existing || getStageSortValue(stage) > getStageSortValue(existing)) {
       uniqueMap.set(key, stage);
     }
   });
@@ -113,7 +112,7 @@ export function deduplicateStagesForRoute(stages: StageResult[]): StageResult[] 
  * ステージをワールドレベル（進行度）の降順でソートします。
  */
 export function sortStages(stages: StageResult[]): StageResult[] {
-  return stages.toSorted((a, b) => getStageSortValue(b.id) - getStageSortValue(a.id));
+  return stages.toSorted((a, b) => getStageSortValue(b) - getStageSortValue(a));
 }
 
 function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResult {
@@ -200,7 +199,7 @@ export function getAvailableStageResults(
  */
 export function calculateRecommendedRoute(
   availableStages: StageResult[]
-): StageResult[] {
+): StageResult[][] {
   // 1. 重複を解除 (計算量を減らすため、各組み合わせで最もワールドレベルが高いものだけを残す)
   // ルート計算では副産物は考慮しない（効率を優先）
   const filteredStages = deduplicateStagesForRoute(availableStages);
@@ -214,27 +213,26 @@ export function calculateRecommendedRoute(
   // 素材IDに 0..n-1 のインデックスを割り当てる（ビット位置として使用）
   const targetItems = Array.from(attainableItems);
   const n = targetItems.length;
-  
+
   // 素材数が多い場合は計算時間の増大を防ぐため貪欲法に切り替える（2^16 = 65536 通りの状態までを許容）
   if (n > 16) {
-    return calculateGreedyRoute(filteredStages, targetItems);
+    return [calculateGreedyRoute(filteredStages, targetItems)];
   }
 
   // 全素材がカバーされた状態を表すビットマスク（n ビットすべて1）
   const allMask = (1 << n) - 1;
 
   /**
-   * dp[mask] = そのビットマスクに対応する素材をカバーするための最適ノード
-   * メモリ効率（GC負荷軽減）のため、ルート全体の配列を保持するのではなく、
-   * 1つ前の状態（parentMask）とその時に使用したステージ（stage）のみを保持し、後で復元する
+   * dp[mask] = そのビットマスクに対応する素材をカバーするための最適ノード（複数保持）
    */
   type DPNode = {
     count: number;           // 使用した合計ステージ数
-    totalLevelValue: number; // ワールドレベル数値の合計（優先順位の判定に使用）
+    totalLevelValue: number; // ワールドレベル数値の合計
     parentMask: number;      // 遷移前のビットマスク
-    stage: StageResult | null;  // この遷移（エッジ）で使用したステージ
+    parentPathIndex: number; // 遷移前のパスのインデックス
+    stage: StageResult | null;
   };
-  const dp = new Map<number, DPNode>();
+  const dp = new Map<number, DPNode[]>();
 
   // 各ステージが「どの素材をカバーするか」をビットマスクで事前計算する
   const targetMap = new Map(targetItems.map((id, i) => [id, i]));
@@ -248,47 +246,70 @@ export function calculateRecommendedRoute(
   }).filter(s => s.mask > 0);
 
   // 初期状態: 何もカバーしていない（マスク0）
-  dp.set(0, { count: 0, totalLevelValue: 0, parentMask: -1, stage: null });
+  dp.set(0, [{ count: 0, totalLevelValue: 0, parentMask: -1, parentPathIndex: -1, stage: null }]);
 
   // ステージを1つずつ考慮してDPテーブルを更新する
   for (const { stage, mask: sMask } of stageData) {
     // マップを反復しながら追加すると無限ループになるため、現在のエントリのスナップショットを取る
     const currentEntries = Array.from(dp.entries());
 
-    for (const [mask, node] of currentEntries) {
+    for (const [mask, nodes] of currentEntries) {
       const nextMask = mask | sMask; // 現在の状態にこのステージを追加した後のカバー状態
       if (nextMask === mask) continue; // 新たにカバーできる素材がなければ計算をスキップ
 
-      const nextCount = node.count + 1;
-      const nextLevelValue = node.totalLevelValue + getStageSortValue(stage.id);
-      const existing = dp.get(nextMask);
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        const nextCount = node.count + 1;
+        const nextLevelValue = node.totalLevelValue + getStageSortValue(stage);
 
-      // より良い経路（1. ステージ数が少ない、2. ワールドレベル合計が高い）が見つかれば更新する
-      if (!existing ||
-          nextCount < existing.count ||
-          (nextCount === existing.count && nextLevelValue > existing.totalLevelValue)) {
-        dp.set(nextMask, {
+        let nextNodes = dp.get(nextMask) || [];
+
+        // すでに同じ「ステージ数」と「合計レベル」の経路があれば追加しない（簡易的な重複排除）
+        if (nextNodes.some(n => n.count === nextCount && n.totalLevelValue === nextLevelValue)) {
+          continue;
+        }
+
+        nextNodes.push({
           count: nextCount,
           totalLevelValue: nextLevelValue,
           parentMask: mask,
+          parentPathIndex: i,
           stage
         });
+
+        // 優先度でソート: 1. ステージ数が少ない, 2. ワールドレベル合計が高い
+        nextNodes.sort((a, b) => a.count - b.count || b.totalLevelValue - a.totalLevelValue);
+
+        // 各マスクごとに上位10件を保持する
+        dp.set(nextMask, nextNodes.slice(0, 10));
       }
     }
   }
 
-  // 最適ルートの復元: 全カバー状態（allMask）から parentMask を辿って逆順にステージを取り出す
-  const bestRoute: StageResult[] = [];
-  let curr = allMask;
-  while (curr > 0) {
-    const node = dp.get(curr);
-    if (!node || !node.stage) break;
-    bestRoute.push(node.stage);
-    curr = node.parentMask;
-  }
+  // ルートの復元関数
+  const reconstructPath = (mask: number, index: number): StageResult[] => {
+    const path: StageResult[] = [];
+    let currMask = mask;
+    let currIdx = index;
+    while (currMask > 0) {
+      const node = dp.get(currMask)?.[currIdx];
+      if (!node || !node.stage) break;
+      path.push(node.stage);
+      const prevMask = node.parentMask;
+      const prevIdx = node.parentPathIndex;
+      currMask = prevMask;
+      currIdx = prevIdx;
+    }
+    return path;
+  };
 
-  // 抽出したステージ群を整形して返す
-  return finalizeRoute(bestRoute, filteredStages);
+  const finalNodes = dp.get(allMask) || [];
+
+  // 上位5件のルートを返す
+  return finalNodes.slice(0, 5).map(node => {
+    const route = reconstructPath(allMask, finalNodes.indexOf(node));
+    return finalizeRoute(route, filteredStages);
+  });
 }
 
 /**
@@ -327,7 +348,7 @@ function calculateGreedyRoute(
       });
 
       // 最も多く素材をカバーし、かつ難易度が高いステージを選ぶ
-      const currentLevelValue = getStageSortValue(stage.id);
+      const currentLevelValue = getStageSortValue(stage);
       if (coverCount > maxCover || (coverCount === maxCover && currentLevelValue > maxWorldLevelValue)) {
         maxCover = coverCount;
         maxWorldLevelValue = currentLevelValue;
@@ -380,9 +401,9 @@ function finalizeRoute(
       const mb = getMetrics(b);
 
       return (
-        mb.maxRank - ma.maxRank || 
-        ma.minNeeded - mb.minNeeded || 
-        getStageSortValue(b.id) - getStageSortValue(a.id)
+        mb.maxRank - ma.maxRank ||
+        ma.minNeeded - mb.minNeeded ||
+        getStageSortValue(b) - getStageSortValue(a)
       );
     })
     .map(s => {
@@ -396,7 +417,7 @@ function finalizeRoute(
       const priorityItem =
         updatedItems.find(m => m.id === s.priorityItemId) ??
         updatedItems.reduce((min, m) => (m.needed < min.needed ? m : min), updatedItems[0]);
-      
+
       const consumeAmount = priorityItem?.needed ?? 0;
 
       // 周回後に、そのステージでドロップする各アイテムの残数を減らす（過剰周回防止の核）

@@ -10,6 +10,7 @@ const selectSelectedAttackType = (state: AppState) => state.selectedAttackType;
 const selectMaxWorld = (state: AppState) => state.maxWorld;
 const selectMaxStageNum = (state: AppState) => state.maxStageNum;
 const selectShowDuplicates = (state: AppState) => state.showDuplicates;
+const selectSelectedRouteIndex = (state: AppState) => state.selectedRouteIndex;
 
 /**
  * ID からアイテムの状態を引ける Map を提供
@@ -129,10 +130,17 @@ export const selectAllStages = createSelector(
   }
 );
 
-export const selectRecommendedStage = createSelector(
+export const selectRecommendedRoutes = createSelector(
   [selectAvailableStages],
   (allStages) => {
     return calculateRecommendedRoute(allStages);
+  }
+);
+
+export const selectRecommendedStage = createSelector(
+  [selectRecommendedRoutes, selectSelectedRouteIndex],
+  (routes, index) => {
+    return routes[index] ?? routes[0] ?? [];
   }
 );
 
@@ -140,7 +148,7 @@ export const selectFilteredBlueprints = createSelector(
   [selectSelectedRank, selectSelectedAttackType, selectBlueprintStateMap],
   (selectedRank, selectedAttackType, stateMap): BlueprintWithState[] => {
     return BLUEPRINTS.map(b => {
-      const state = stateMap.get(b.id) || { req: 0, held: 0, shortage: 0, isComplete: false };
+      const state = stateMap.get(b.id) ?? { req: 0, held: 0, shortage: 0, isComplete: false };
       return { ...b, ...state };
     }).filter(b => {
       const subRank = selectedRank !== 'All' ? String(parseInt(selectedRank) - 1) : null;
