@@ -509,8 +509,8 @@ function getStageMetrics(stage: StageResult): { maxRank: number, minNeeded: numb
     const rank = getBlueprintRank(m.id);
     if (rank > maxRank) {
       maxRank = rank;
-      minNeeded = m.needed;
-    } else if (rank === maxRank && m.needed < minNeeded) {
+    }
+    if (m.needed < minNeeded) {
       minNeeded = m.needed;
     }
   }
@@ -548,8 +548,8 @@ function finalizeRoute(
   }));
 
   stagesWithMetrics.sort((a, b) =>
-    b.metrics.maxRank - a.metrics.maxRank ||
     a.metrics.minNeeded - b.metrics.minNeeded ||
+    b.metrics.maxRank - a.metrics.maxRank ||
     b.metrics.levelValue - a.metrics.levelValue
   );
 

@@ -92,7 +92,7 @@ describe('stageRecommendation Utility Functions', () => {
     });
   });
   describe('おすすめルートの最終的な並び順 (finalizeRoute)', () => {
-    it('ランクが高い > 必要数が少ない > ワールドレベルが高い 順にソートされる', () => {
+    it('必要数が少ない > ランクが高い > ワールドレベルが高い 順にソートされる', () => {
       // ランク8の素材A (必要10)
       // ランク8の素材B (必要2)
       // ランク5の素材C (必要1)
@@ -103,22 +103,19 @@ describe('stageRecommendation Utility Functions', () => {
       ];
 
       // calculateRecommendedRoute 内部で行われる deduplicate や finalizeRoute の順序をシミュレート
-      // ここでは finalizeRoute (のソート部分) を直接呼び出すために、
-      // calculateRecommendedRoute の戻り値を確認する
-
       const routes = calculateRecommendedRoute(mockSelectedStages);
       const route = routes[0];
 
       // 期待される順序:
-      // 1位: 27-10 (ランク8, 必要数2) -> ランク8の中で最も必要数が少ない
-      // 2位: 28-1  (ランク8, 必要数10) -> ランク8
-      // 3位: 16-1  (ランク5, 必要数1)  -> ランクが低いので最後
+      // 1位: 16-1  (ランク5, 必要数1)  -> 必要数が最も少ないので最優先
+      // 2位: 27-10 (ランク8, 必要数2)  -> 次に必要数が少ない
+      // 3位: 28-1  (ランク8, 必要数10) -> ランクは高いが必要数が多いので最後
 
       const ids = route.map(r => r.id);
 
-      expect(ids[0]).toBe('27-10');
-      expect(ids[1]).toBe('28-1');
-      expect(ids[2]).toBe('16-1');
+      expect(ids[0]).toBe('16-1');
+      expect(ids[1]).toBe('27-10');
+      expect(ids[2]).toBe('28-1');
     });
   });
 });
