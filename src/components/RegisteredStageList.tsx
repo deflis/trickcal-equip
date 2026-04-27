@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { ChevronDown, LayoutList } from 'lucide-react';
 import { range } from '../data/array';
 import { STAGES_BY_WORLD } from '../data/stages';
 import { MIN_WORLD, MAX_WORLD } from '../data/types';
@@ -10,52 +12,91 @@ const groupedStages = range(MIN_WORLD, MAX_WORLD).map((world) => {
   return [world, stages] as const;
 }).filter(([, stageIds]) => stageIds.length > 0);
 
-
-
 export const RegisteredStageList = () => {
+  const [isOpen, setIsOpen] = useState(true);
+  const [collapsedWorlds, setCollapsedWorlds] = useState<Set<number>>(new Set());
+
+  const toggleWorld = (world: number) => {
+    const next = new Set(collapsedWorlds);
+    if (next.has(world)) {
+      next.delete(world);
+    } else {
+      next.add(world);
+    }
+    setCollapsedWorlds(next);
+  };
+
   return (
     <div className="mt-12 pt-8 border-t border-slate-200">
-      <h3 className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2">
-        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-        データが入力されているステージ ({groupedStages.length})
-      </h3>
-      <div className="flex flex-wrap gap-x-6 gap-y-3">
-        {groupedStages.map(([world, stageIds]) => (
-          <div key={world} className="flex flex-col gap-1">
-            <span className="text-[10px] font-bold text-slate-300">W{world}</span>
-            <div className="flex flex-wrap gap-1.5 max-w-[20rem]">
-              {stageIds.map(id => {
-                const stageData = STAGES_BY_WORLD[world as keyof typeof STAGES_BY_WORLD][id as keyof (typeof STAGES_BY_WORLD)[3]];
-                return (
-                  <div 
-                    key={id} 
-                    className="flex flex-col items-center gap-0.5 bg-slate-50 px-1.5 py-1 rounded border border-slate-100"
-                  >
-                    <span className="text-[9px] font-medium text-slate-400">
-                      {world}-{id}
-                    </span>
-                    <div className="flex gap-0.5">
-                      {stageData.drops.map((dropId, i) => {
-                        const blueprint = BLUEPRINTS.find(b => b.id === dropId)
-                        if (!blueprint) return null;
-                        return (
-                          <img 
-                            key={i} 
-                            src={getBlueprintIcon(blueprint)} 
-                            alt={blueprint.name}
-                            title={blueprint.name}
-                            className="w-4 h-4 object-contain opacity-80" 
-                          />
-                        );
-                      })}
-                    </div>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between group py-2"
+      >
+        <h3 className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 group-hover:text-slate-600 transition-colors">
+          <LayoutList className="w-3 h-3" />
+          データが入力されているステージ ({groupedStages.length})
+        </h3>
+        <div className={`transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`}>
+          <ChevronDown className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="flex flex-wrap gap-x-8 gap-y-6 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          {groupedStages.map(([world, stageIds]) => {
+            const isCollapsed = collapsedWorlds.has(world);
+            
+            return (
+              <div key={world} className="flex flex-col gap-2">
+                <button 
+                  onClick={() => toggleWorld(world)}
+                  className="flex items-center gap-1.5 self-start group"
+                >
+                  <span className={`text-[10px] font-bold transition-colors ${isCollapsed ? 'text-slate-300 group-hover:text-slate-400' : 'text-slate-400 group-hover:text-indigo-500'}`}>
+                    WORLD {world}
+                  </span>
+                  <div className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}>
+                    <ChevronDown className={`w-3 h-3 ${isCollapsed ? 'text-slate-200' : 'text-slate-300'}`} />
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
+                </button>
+
+                {!isCollapsed && (
+                  <div className="flex flex-wrap gap-2 max-w-[24rem] animate-in fade-in slide-in-from-left-1 duration-200">
+                    {stageIds.map(id => {
+                      const stageData = STAGES_BY_WORLD[world as keyof typeof STAGES_BY_WORLD][id as keyof (typeof STAGES_BY_WORLD)[3]];
+                      return (
+                        <div 
+                          key={id} 
+                          className="flex flex-col items-center gap-1 bg-white px-2 py-1.5 rounded-lg border border-slate-100 shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all"
+                        >
+                          <span className="text-[9px] font-bold text-slate-400">
+                            {world}-{id}
+                          </span>
+                          <div className="flex gap-1">
+                            {stageData.drops.map((dropId, i) => {
+                              const blueprint = BLUEPRINTS.find(b => b.id === dropId)
+                              if (!blueprint) return null;
+                              return (
+                                <img 
+                                  key={i} 
+                                  src={getBlueprintIcon(blueprint)} 
+                                  alt={blueprint.name}
+                                  title={blueprint.name}
+                                  className="w-4 h-4 object-contain opacity-90" 
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
