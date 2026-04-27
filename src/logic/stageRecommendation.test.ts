@@ -529,4 +529,34 @@ describe('stageRecommendation Logic with Real Data', () => {
       });
     });
   });
+
+  describe('複数ルート候補の返却', () => {
+    it('同等に効率的な複数のルートがある場合、複数の候補を返す', () => {
+      // 素材A, B, C, D が必要
+      // パターン1: (A,B) + (C,D)
+      // パターン2: (A,C) + (B,D)
+      // これらが同じワールドレベルであれば、両方とも最適な候補になる
+      
+      const itemA = blueprints[2].sword;
+      const itemB = blueprints[2].armor;
+      const itemC = blueprints[2].wand;
+      const itemD = blueprints[2].hat;
+
+      const realMockStages: StageResult[] = [
+        { id: '10-1', world: 10, level: 1, score: 20, matchingItems: [{ id: itemA, needed: 10 }, { id: itemB, needed: 10 }] },
+        { id: '10-2', world: 10, level: 2, score: 20, matchingItems: [{ id: itemC, needed: 10 }, { id: itemD, needed: 10 }] },
+        { id: '10-3', world: 10, level: 3, score: 20, matchingItems: [{ id: itemA, needed: 10 }, { id: itemC, needed: 10 }] },
+        { id: '10-4', world: 10, level: 4, score: 20, matchingItems: [{ id: itemB, needed: 10 }, { id: itemD, needed: 10 }] },
+      ];
+
+      const routes = calculateRecommendedRoute(realMockStages);
+
+      // 少なくとも2つの候補が返ってくることを期待
+      expect(routes.length).toBeGreaterThanOrEqual(2);
+
+      const routeIds = routes.map(r => r.map(s => s.id).sort().join(','));
+      expect(routeIds).toContain('10-1,10-2');
+      expect(routeIds).toContain('10-3,10-4');
+    });
+  });
 });

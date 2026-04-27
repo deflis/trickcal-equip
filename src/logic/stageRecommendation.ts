@@ -317,24 +317,45 @@ export function calculateRecommendedRoute(
   // 探索用の状態型
   type RouteResult = { stages: StageResult[], count: number, totalLevelValue: number };
 
-  function isBetterRoute(a: RouteResult, b: RouteResult | null): boolean {
-    if (!b) return true;
-    if (a.count !== b.count) return a.count < b.count;
-    return a.totalLevelValue > b.totalLevelValue;
+  /**
+   * 複数のルート候補をマージし、優秀なものを残す
+   */
+  function mergeResults(a: RouteResult[], b: RouteResult[]): RouteResult[] {
+    const combined = [...a, ...b];
+    if (combined.length === 0) return [];
+
+    // ステージ数（昇順） > ワールドレベル合計（降順）でソート
+    combined.sort((x, y) => x.count - y.count || y.totalLevelValue - x.totalLevelValue);
+
+    const minCount = combined[0].count;
+    // 最小ステージ数のものだけに限定する（効率重視のため）
+    const candidates = combined.filter(c => c.count === minCount);
+
+    // 重複除去（ステージの組み合わせが同じもの）
+    const unique = new Map<string, RouteResult>();
+    for (const res of candidates) {
+      const key = res.stages.map(s => s.id).sort().join(',');
+      if (!unique.has(key)) {
+        unique.set(key, res);
+      }
+    }
+
+    // 上位5つまでを候補とする
+    return Array.from(unique.values()).slice(0, 5);
   }
 
-  const memo = new Map<number, RouteResult | null>();
+  const memo = new Map<number, RouteResult[]>();
 
   /**
    * メモ化付きの再帰的深さ優先探索（DFS）
    * @param uncoveredMask 現在の未カバーアイテムのビットマスク
    */
-  function dfs(uncoveredMask: number): RouteResult | null {
+  function dfs(uncoveredMask: number): RouteResult[] {
     if (uncoveredMask === 0) {
-      return { stages: [], count: 0, totalLevelValue: 0 };
+      return [{ stages: [], count: 0, totalLevelValue: 0 }];
     }
 
-    if (memo.has(uncoveredMask)) return memo.get(uncoveredMask) || null;
+    if (memo.has(uncoveredMask)) return memo.get(uncoveredMask)!;
 
     // 現在の未カバーアイテムの中で、最大のランクを見つける
     let topRank = 0;
@@ -394,39 +415,32 @@ export function calculateRecommendedRoute(
       }
     }
 
-    let bestResult: RouteResult | null = null;
+    let currentBestResults: RouteResult[] = [];
 
     // 抽出された候補ステージを使用して再帰的に探索
     for (const entry of candidates) {
       const cover = entry.mask & uncoveredMask;
       const nextMask = uncoveredMask & ~cover;
 
-      const subResult = dfs(nextMask);
-      if (subResult) {
-        const candidateResult: RouteResult = {
-          stages: [entry.stage, ...subResult.stages],
-          count: 1 + subResult.count,
-          totalLevelValue: entry.levelValue + subResult.totalLevelValue
-        };
-        if (isBetterRoute(candidateResult, bestResult)) {
-          bestResult = candidateResult;
-        }
-      }
+      const subResults = dfs(nextMask);
+      const branchResults = subResults.map(sub => ({
+        stages: [entry.stage, ...sub.stages],
+        count: 1 + sub.count,
+        totalLevelValue: entry.levelValue + sub.totalLevelValue
+      }));
+
+      currentBestResults = mergeResults(currentBestResults, branchResults);
     }
 
-    memo.set(uncoveredMask, bestResult);
-    return bestResult;
+    memo.set(uncoveredMask, currentBestResults);
+    return currentBestResults;
   }
 
   // 探索開始
   const allMask = (1 << n) - 1;
-  const bestRouteResult = dfs(allMask);
+  const bestResults = dfs(allMask);
 
-  if (!bestRouteResult || bestRouteResult.stages.length === 0) {
-    return [];
-  }
-
-  return [finalizeRoute(bestRouteResult.stages, filteredStages)];
+  return bestResults.map(res => finalizeRoute(res.stages, filteredStages));
 }
 
 /**
