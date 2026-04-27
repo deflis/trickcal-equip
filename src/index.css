@@ -23,4 +23,13 @@
   
   --radius-btn: 6px;
   --radius-card: 12px;
+
+  --text-display: 72px;
+  --text-headline: 60px;
+  --text-section: 32px;
+  --text-subhead: 24px;
+  --text-body: 15px;
+  --text-small: 13px;
+  --text-caption: 12px;
+  --text-overline: 11px;
 }

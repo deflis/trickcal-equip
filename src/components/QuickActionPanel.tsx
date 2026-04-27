@@ -17,13 +17,13 @@ const StageProgressInput = () => {
           <Trophy className="w-4 h-4" />
         </div>
         <div>
-          <h3 className="text-xs font-display font-bold uppercase tracking-widest text-text-primary">最高到達ステージ</h3>
-          <p className="text-[10px] text-text-secondary mt-0.5">これ以降のドロップは無視されます</p>
+          <h3 className="text-small font-display font-bold uppercase tracking-widest text-text-primary">最高到達ステージ</h3>
+          <p className="text-caption text-text-secondary mt-0.5">これ以降のドロップは無視されます</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-md border border-border-subtle focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/12 transition-all">
-          <span className="text-[10px] font-bold text-text-secondary">WORLD</span>
+          <span className="text-caption font-bold text-text-secondary">WORLD</span>
           <input
             type="number"
             value={maxWorld}
@@ -35,7 +35,7 @@ const StageProgressInput = () => {
         </div>
         <span className="text-border-subtle font-bold">—</span>
         <div className="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-md border border-border-subtle focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/12 transition-all">
-          <span className="text-[10px] font-bold text-text-secondary">STAGE</span>
+          <span className="text-caption font-bold text-text-secondary">STAGE</span>
           <input
             type="number"
             value={maxStageNum}
@@ -97,14 +97,14 @@ const CollectionModeSection = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-display font-bold uppercase tracking-widest flex items-center gap-2 text-text-primary">
+        <h3 className="text-body font-display font-bold uppercase tracking-widest flex items-center gap-2 text-text-primary">
           <CheckCircle2 className="w-4 h-4 text-status-success" />
           収集モード（1人分）
         </h3>
         {hasRequirements && (
           <button
             onClick={onClearAll}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-status-error hover:bg-red-600 text-white rounded-md text-xs font-bold transition-all shadow-sm hover:shadow-card-hover hover:-translate-y-[1px]"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-status-error hover:bg-red-600 text-white rounded-md text-small font-bold transition-all shadow-sm hover:shadow-card-hover hover:-translate-y-[1px]"
           >
             <Trash2 className="w-3.5 h-3.5" /> 全リセット
           </button>
@@ -114,20 +114,20 @@ const CollectionModeSection = () => {
       {selectedRank !== 'All' && config ? (
         <div className="space-y-3">
           <div className="bg-surface-bg rounded-lg p-3 border border-border-subtle space-y-2">
-            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">装備を選択</p>
+            <p className="text-caption font-bold text-text-secondary uppercase tracking-widest">装備を選択</p>
 
             <div className="flex flex-wrap gap-2">
               {isTypeSelected && (
                 <button
                   onClick={() => setSelectedAttackType('all')}
-                  className="px-2.5 py-1 rounded-md text-[11px] font-bold transition-all border bg-surface border-border-subtle text-text-secondary hover:bg-surface-bg"
+                  className="px-2.5 py-1 rounded-md text-caption font-bold transition-all border bg-surface border-border-subtle text-text-secondary hover:bg-surface-bg"
                 >
                   すべて
                 </button>
               )}
               <button
                 onClick={() => handleAttackTypeSelect('physical')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all border ${
+                className={`px-2.5 py-1 rounded-md text-caption font-bold transition-all border ${
                   selectedAttackType === 'physical'
                     ? 'bg-status-warning/10 border-status-warning/30 text-status-warning'
                     : 'bg-surface border-border-subtle text-text-secondary hover:bg-surface-bg'
@@ -137,7 +137,7 @@ const CollectionModeSection = () => {
               </button>
               <button
                 onClick={() => handleAttackTypeSelect('magic')}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all border ${
+                className={`px-2.5 py-1 rounded-md text-caption font-bold transition-all border ${
                   selectedAttackType === 'magic'
                     ? 'bg-primary/10 border-primary/30 text-primary'
                     : 'bg-surface border-border-subtle text-text-secondary hover:bg-surface-bg'
@@ -155,7 +155,7 @@ const CollectionModeSection = () => {
                     <button
                       key={bp.id}
                       onClick={() => handleItemToggle(bp, isOn)}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all border ${
+                      className={`px-2.5 py-1 rounded-md text-caption font-bold transition-all border ${
                         isOn
                           ? 'bg-primary border-primary text-white shadow-sm'
                           : 'bg-surface border-border-subtle text-text-secondary/50 line-through hover:bg-surface-bg hover:text-text-secondary'
@@ -170,7 +170,7 @@ const CollectionModeSection = () => {
           </div>
 
           <div className="flex justify-between items-center px-1">
-            <div className="flex items-center gap-4 text-[10px] font-bold text-text-secondary">
+            <div className="flex items-center gap-4 text-caption font-bold text-text-secondary">
               <span>R{selectedRank}: {config.main}枚</span>
               {hasSub && (
                 <span>R{selectedRank - 1}: {config.sub}枚</span>
@@ -178,7 +178,7 @@ const CollectionModeSection = () => {
             </div>
             <button
               onClick={() => hasSub ? onClearRankWithSub(selectedRank) : onClearRank(selectedRank)}
-              className="text-[10px] flex items-center gap-1 text-primary/70 hover:text-primary transition-colors font-bold"
+              className="text-caption flex items-center gap-1 text-primary/70 hover:text-primary transition-colors font-bold"
             >
               <RefreshCcw className="w-3 h-3" />
               {hasSub
@@ -189,7 +189,7 @@ const CollectionModeSection = () => {
         </div>
       ) : (
         <div className="py-6 text-center border border-border-subtle rounded-lg bg-surface-bg">
-          <p className="text-xs text-text-secondary">設計図リストからランクを選択してください</p>
+          <p className="text-small text-text-secondary">設計図リストからランクを選択してください</p>
         </div>
       )}
     </div>

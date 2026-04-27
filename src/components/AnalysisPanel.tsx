@@ -15,14 +15,14 @@ export const AnalysisPanel = () => {
   return (
   <div className="bg-surface rounded-xl border border-border-subtle p-6 h-full min-h-100">
     <div className="flex items-center justify-between mb-6">
-      <h2 className="text-lg font-display font-semibold flex items-center gap-2 text-text-primary tracking-tight">
+      <h2 className="text-subhead font-display font-semibold flex items-center gap-2 text-text-primary tracking-tight">
         <MapPin className="text-status-success w-5 h-5" />
         推奨周回ステージ
       </h2>
       <div className="flex items-center gap-3">
         {activeTab === 'all' && (
           <label className="flex items-center gap-2 cursor-pointer group">
-            <span className="text-[10px] font-bold text-text-secondary group-hover:text-primary transition-colors">
+            <span className="text-caption font-bold text-text-secondary group-hover:text-primary transition-colors">
               {showDuplicates ? '重複あり' : '重複なし'}
             </span>
             <div 
@@ -33,7 +33,7 @@ export const AnalysisPanel = () => {
             </div>
           </label>
         )}
-        <div className="text-[10px] bg-surface-bg border border-border-subtle px-2 py-1 rounded-md text-text-secondary font-bold">
+        <div className="text-overline uppercase bg-surface-bg border border-border-subtle px-2 py-1 rounded-md text-text-secondary font-bold">
           UP TO {maxWorld}-{maxStageNum}
         </div>
       </div>
@@ -42,7 +42,7 @@ export const AnalysisPanel = () => {
     <div className="flex bg-surface-bg border border-border-subtle p-1 rounded-lg mb-6">
       <button
         onClick={() => setActiveTab('recommended')}
-        className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-all ${
+        className={`flex-1 flex items-center justify-center gap-2 py-2 text-small font-bold rounded-md transition-all ${
           activeTab === 'recommended'
             ? 'bg-surface text-status-success shadow-sm'
             : 'text-text-secondary hover:text-text-primary'
@@ -53,7 +53,7 @@ export const AnalysisPanel = () => {
       </button>
       <button
         onClick={() => setActiveTab('all')}
-        className={`flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold rounded-md transition-all ${
+        className={`flex-1 flex items-center justify-center gap-2 py-2 text-small font-bold rounded-md transition-all ${
           activeTab === 'all'
             ? 'bg-surface text-primary shadow-sm'
             : 'text-text-secondary hover:text-text-primary'
@@ -73,13 +73,13 @@ export const AnalysisPanel = () => {
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">定石代用</p>
-            <p className="text-xs text-amber-600/80 font-medium">不足分をすべて定石で賄う場合</p>
+            <p className="text-overline font-bold text-amber-700 uppercase tracking-wider">定石代用</p>
+            <p className="text-small text-amber-600/80 font-medium">不足分をすべて定石で賄う場合</p>
           </div>
         </div>
         <div className="text-right">
-          <span className="text-2xl font-black text-amber-600">{totalJoseki.toLocaleString()}</span>
-          <span className="text-xs font-bold text-amber-500 ml-1">個</span>
+          <span className="text-section font-black text-amber-600">{totalJoseki.toLocaleString()}</span>
+          <span className="text-small font-bold text-amber-500 ml-1">個</span>
         </div>
       </div>
     )}

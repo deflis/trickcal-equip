@@ -32,7 +32,7 @@ export const RegisteredStageList = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between group py-2"
       >
-        <h3 className="text-text-secondary text-[10px] font-display font-bold uppercase tracking-widest flex items-center gap-2 group-hover:text-text-primary transition-colors">
+        <h3 className="text-text-secondary text-overline font-display font-bold uppercase tracking-widest flex items-center gap-2 group-hover:text-text-primary transition-colors">
           <LayoutList className="w-3 h-3" />
           データが入力されているステージ ({groupedStages.length})
         </h3>
@@ -52,7 +52,7 @@ export const RegisteredStageList = () => {
                   onClick={() => toggleWorld(world)}
                   className="flex items-center gap-1.5 self-start group"
                 >
-                  <span className={`text-[10px] font-bold transition-colors ${isCollapsed ? 'text-text-secondary/50 group-hover:text-text-secondary' : 'text-text-secondary group-hover:text-primary'}`}>
+                  <span className={`text-caption font-bold transition-colors ${isCollapsed ? 'text-text-secondary/50 group-hover:text-text-secondary' : 'text-text-secondary group-hover:text-primary'}`}>
                     WORLD {world}
                   </span>
                   <div className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}>
@@ -69,7 +69,7 @@ export const RegisteredStageList = () => {
                           key={id} 
                           className="flex flex-col items-center gap-1 bg-surface px-2 py-1.5 rounded-md border border-border-subtle shadow-sm hover:border-primary/30 hover:-translate-y-[1px] transition-all"
                         >
-                          <span className="text-[9px] font-bold text-text-secondary">
+                          <span className="text-caption font-bold text-text-secondary">
                             {world}-{id}
                           </span>
                           <div className="flex gap-1">

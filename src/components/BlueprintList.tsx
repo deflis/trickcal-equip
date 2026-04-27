@@ -43,24 +43,24 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
             <img src={getBlueprintIcon(bp)} alt={bp.name} className="w-full h-full object-contain" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className={`font-bold text-xs truncate ${shortage > 0 ? 'text-primary' : isComplete ? 'text-status-success' : 'text-text-primary'}`}>
+            <div className={`font-bold text-small ${shortage > 0 ? 'text-primary' : isComplete ? 'text-status-success' : 'text-text-primary'}`}>
               {bp.name}
             </div>
-            <div className="text-[10px] text-text-secondary mt-0.5">Rank {bp.rank}</div>
+            <div className="text-caption text-text-secondary mt-0.5">Rank {bp.rank}</div>
           </div>
         </div>
 
         {req > 0 && (
           <div className="shrink-0">
             {isComplete ? (
-               <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-status-success/10 border border-status-success/20 text-status-success text-[10px] font-bold">
+               <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-status-success/10 border border-status-success/20 text-status-success text-caption font-bold">
                 <Check className="w-3 h-3" />
                 完了
               </span>
             ) : (
-              <span className="flex items-baseline gap-1 px-2 py-0.5 rounded-full bg-status-warning/10 border border-status-warning/20 text-status-warning text-[10px] font-bold">
+              <span className="flex items-baseline gap-1 px-2 py-0.5 rounded-full bg-status-warning/10 border border-status-warning/20 text-status-warning text-caption font-bold">
                 不足
-                <span className="text-xs font-black">{shortage}</span>
+                <span className="text-small font-black">{shortage}</span>
               </span>
             )}
           </div>
@@ -69,7 +69,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
 
       <div className="grid grid-cols-2 gap-2 mt-3">
         <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-[10px] font-bold text-primary px-0.5">必要</span>
+          <span className="text-caption font-bold text-primary px-0.5">必要</span>
           <div className="flex items-center bg-surface rounded-md shadow-sm border border-primary/20 overflow-hidden w-full transition-colors focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/12">
             <button onClick={() => onUpdate(bp.id, -1)} className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors shrink-0">
               <Minus className="w-3.5 h-3.5" />
@@ -80,7 +80,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
               value={req === 0 ? '' : req}
               placeholder="0"
               onChange={(e) => onSetValue(bp.id, e.target.value)}
-              className="flex-1 w-full min-w-0 text-center font-bold text-sm text-primary focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="flex-1 w-full min-w-0 text-center font-bold text-body text-primary focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button onClick={() => onUpdate(bp.id, 1)} className="p-1.5 text-primary hover:text-primary-hover hover:bg-primary/5 transition-colors shrink-0">
               <Plus className="w-3.5 h-3.5" />
@@ -89,7 +89,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
         </div>
 
         <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-[10px] font-bold text-text-secondary px-0.5">所持</span>
+          <span className="text-caption font-bold text-text-secondary px-0.5">所持</span>
           <div className="flex items-center bg-surface rounded-md shadow-sm border border-border-subtle overflow-hidden w-full transition-colors focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/12">
             <button onClick={() => onUpdateHolding(bp.id, -1)} className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors shrink-0">
               <Minus className="w-3.5 h-3.5" />
@@ -100,7 +100,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
               value={held === 0 ? '' : held}
               placeholder="0"
               onChange={(e) => onSetHoldingValue(bp.id, e.target.value)}
-              className="flex-1 w-full min-w-0 text-center font-bold text-sm text-text-secondary focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="flex-1 w-full min-w-0 text-center font-bold text-body text-text-secondary focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
             <button onClick={() => onUpdateHolding(bp.id, 1)} className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors shrink-0">
               <Plus className="w-3.5 h-3.5" />
@@ -114,7 +114,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
           {held > 0 && req > 0 && (
             <button
               onClick={() => onConsumeHolding(bp.id)}
-              className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold text-status-warning bg-status-warning/10 hover:bg-status-warning/20 border border-status-warning/20 rounded transition-colors"
+              className="flex items-center gap-0.5 px-1.5 py-0.5 text-caption font-bold text-status-warning bg-status-warning/10 hover:bg-status-warning/20 border border-status-warning/20 rounded transition-colors"
               title="所持数を必要数に充当して消費"
             >
               <Zap className="w-2.5 h-2.5" />
@@ -124,7 +124,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
           {req > 0 && (
             <button
               onClick={() => onClearItem(bp.id)}
-              className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-primary/70 hover:text-primary hover:bg-primary/10 rounded transition-colors"
+              className="flex items-center gap-0.5 px-1.5 py-0.5 text-caption font-medium text-primary/70 hover:text-primary hover:bg-primary/10 rounded transition-colors"
               title="必要数をリセット"
             >
               <Trash2 className="w-3 h-3" />
@@ -134,7 +134,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
           {held > 0 && (
             <button
               onClick={() => onClearHolding(bp.id)}
-              className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-text-secondary hover:text-status-error hover:bg-status-error/10 rounded transition-colors"
+              className="flex items-center gap-0.5 px-1.5 py-0.5 text-caption font-medium text-text-secondary hover:text-status-error hover:bg-status-error/10 rounded transition-colors"
               title="所持数をリセット"
             >
               <Trash2 className="w-3 h-3" />
@@ -177,7 +177,7 @@ export const BlueprintList = () => {
   return (
     <div className="bg-surface rounded-xl border border-border-subtle p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-display font-semibold flex items-center gap-2 text-text-primary tracking-tight">
+        <h2 className="text-subhead font-display font-semibold flex items-center gap-2 text-text-primary tracking-tight">
           <Filter className="text-primary w-5 h-5" />
           設計図リスト
         </h2>
@@ -189,7 +189,7 @@ export const BlueprintList = () => {
             <button
               key={rank}
               onClick={() => onRankChange(rank)}
-              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all shrink-0 ${
+              className={`px-3 py-1.5 rounded-md text-small font-bold transition-all shrink-0 ${
                 selectedRank === rank
                   ? 'bg-primary text-white shadow-md'
                   : 'bg-surface-bg text-text-secondary border border-border-subtle hover:bg-surface shadow-sm'
@@ -205,7 +205,7 @@ export const BlueprintList = () => {
             <button
               key={type.value}
               onClick={() => onAttackTypeChange(type.value)}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-small font-bold transition-all ${
                 selectedAttackType === type.value
                   ? 'bg-status-warning/10 text-status-warning border-2 border-status-warning shadow-sm'
                   : 'bg-surface text-text-secondary border-2 border-border-subtle hover:bg-surface-bg'
@@ -229,7 +229,7 @@ export const BlueprintList = () => {
           <>
             <div className="flex items-center gap-2">
               <div className="h-px flex-1 bg-border-subtle" />
-              <span className="text-xs font-bold text-text-secondary bg-surface-bg border border-border-subtle px-2 py-0.5 rounded-full">
+              <span className="text-small font-bold text-text-secondary bg-surface-bg border border-border-subtle px-2 py-0.5 rounded-full">
                 Rank {subRank}（下位ランク）
               </span>
               <div className="h-px flex-1 bg-border-subtle" />

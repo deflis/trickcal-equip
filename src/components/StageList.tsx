@@ -24,16 +24,18 @@ const RequiredItemChip = ({
 
   return (
     <span
-      className={`flex items-center gap-1.5 text-[10px] border px-3 py-1 rounded-full shadow-sm font-bold transition-colors ${
+      className={`flex items-center gap-1.5 text-caption border px-3 py-1 rounded-full shadow-sm font-bold transition-colors ${
         isPriority
-          ? 'bg-status-warning/10 border-status-warning/20 text-status-warning ring-1 ring-status-warning/20'
+          ? 'bg-surface border-border-subtle text-text-primary'
           : 'bg-surface border-border-subtle text-text-secondary'
       }`}
     >
       <img src={getBlueprintIcon(blueprint)} alt={blueprint.name} className="w-4 h-4 object-contain" />
-      <span className="truncate max-w-20">{blueprint.name}</span>
-      <span className={isPriority ? 'text-status-warning' : activeTab === 'recommended' ? 'text-status-success' : 'text-primary'}>x{item.needed}</span>
-      {isPriority && <span className="ml-0.5 text-[8px] opacity-70">★</span>}
+      <span className="flex items-center">
+        {isPriority && <span className="mr-1 text-status-warning">★</span>}
+        {blueprint.name}
+      </span>
+      <span className={activeTab === 'recommended' ? 'text-status-success' : 'text-primary'}>x{item.needed}</span>
     </span>
   );
 };
@@ -41,7 +43,7 @@ const RequiredItemChip = ({
 const RequiredDrops = ({ result, activeTab }: { result: StageResult, activeTab: 'recommended' | 'all' }) => {
   return (
     <div className="mt-3">
-      <div className="text-[10px] font-bold text-text-secondary flex items-center gap-1 mb-2">
+      <div className="text-caption font-bold text-text-secondary flex items-center gap-1 mb-2">
         <Info className="w-3 h-3" />
         ドロップする必要アイテム
       </div>
@@ -64,7 +66,7 @@ const OtherDropChip = ({ id }: { id: BlueprintId }) => {
   if (!blueprint) return null;
 
   return (
-    <span className="flex items-center gap-1 text-[9px] bg-surface-bg border border-border-subtle px-2 py-0.5 rounded-full text-text-secondary">
+    <span className="flex items-center gap-1 text-caption bg-surface-bg border border-border-subtle px-2 py-0.5 rounded-full text-text-secondary">
       <img src={getBlueprintIcon(blueprint)} alt={blueprint.name} className="w-3 h-3 object-contain grayscale opacity-70" />
       {blueprint.name}
     </span>
@@ -82,7 +84,7 @@ const OtherDrops = ({ result }: { result: StageResult }) => {
 
   return (
     <div className="mt-2 pt-2 border-t border-border-subtle">
-      <div className="text-[9px] font-bold text-text-secondary/70 mb-1.5">
+      <div className="text-caption font-bold text-text-secondary/70 mb-1.5">
         副産物
       </div>
       <div className="flex flex-wrap gap-1 opacity-70">
@@ -109,7 +111,7 @@ export const StageList = ({ activeTab }: StageListProps) => {
         <div className="bg-surface-bg p-6 rounded-full mb-4 border border-border-subtle">
           <Info className="w-12 h-12 opacity-20" />
         </div>
-        <p className="text-sm font-medium">到達範囲内にドロップステージが<br />見つかりません</p>
+        <p className="text-body font-medium">到達範囲内にドロップステージが<br />見つかりません</p>
       </div>
     );
   }
@@ -118,7 +120,7 @@ export const StageList = ({ activeTab }: StageListProps) => {
     <>
       {activeTab === 'recommended' && (
         <div className="space-y-4 mb-6">
-          <div className="p-3 bg-status-success/5 rounded-xl border border-status-success/20 text-[11px] text-status-success font-medium">
+          <div className="p-3 bg-status-success/5 rounded-xl border border-status-success/20 text-caption text-status-success font-medium">
             すべての必要アイテムを網羅する、効率的なステージの組み合わせです。
           </div>
 
@@ -139,12 +141,12 @@ export const StageList = ({ activeTab }: StageListProps) => {
                         : 'bg-surface border-status-success/20 text-status-success hover:border-status-success/40 hover:bg-status-success/5'
                     }`}
                   >
-                    <div className="text-[10px] font-black uppercase tracking-wider opacity-80 mb-0.5">
+                    <div className="text-caption font-black uppercase tracking-wider opacity-80 mb-0.5">
                       Candidate {i + 1}
                     </div>
-                    <div className="flex items-center gap-2 font-bold text-xs">
+                    <div className="flex items-center gap-2 font-bold text-small">
                       <span>{rSet.length} Stages</span>
-                      <span className="opacity-50 text-[10px]">|</span>
+                      <span className="opacity-50 text-caption">|</span>
                       <span>Avg. Lvl {avgLevel}</span>
                     </div>
                   </button>
@@ -169,12 +171,12 @@ export const StageList = ({ activeTab }: StageListProps) => {
                 <div>
                   <div className="flex gap-1 flex-wrap mb-1">
                     {activeTab === 'recommended' && (
-                      <span className="inline-block px-2 py-0.5 bg-status-success text-white text-[9px] font-black rounded-full uppercase tracking-wider">
+                      <span className="inline-block px-2 py-0.5 bg-status-success text-white text-overline font-black rounded-full uppercase tracking-wider">
                         STEP {index + 1}
                       </span>
                     )}
                   </div>
-                  <h3 className="font-display font-bold tracking-tight text-xl text-text-primary flex items-center gap-2">
+                  <h3 className="font-display font-bold tracking-tight text-subhead text-text-primary flex items-center gap-2">
                     World {result.id}
                   </h3>
                 </div>
