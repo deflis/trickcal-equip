@@ -156,16 +156,12 @@ export const StageList = ({ activeTab }: StageListProps) => {
       )}
       <div className="space-y-4">
         {displayStages.map((result: StageResult, index) => {
-          const isTopLevel = activeTab === 'all' && index === 0;
-          
           return (
             <div
               key={result.id}
               className={`relative p-4 rounded-xl border-2 transition-all ${
                 activeTab === 'recommended'
                   ? 'border-emerald-100 bg-white hover:border-emerald-200'
-                  : isTopLevel
-                  ? 'border-indigo-200 bg-indigo-50 shadow-md'
                   : 'border-slate-100 bg-white hover:border-indigo-100'
               }`}
             >
@@ -175,11 +171,6 @@ export const StageList = ({ activeTab }: StageListProps) => {
                     {activeTab === 'recommended' && (
                       <span className="inline-block px-2 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase tracking-wider">
                         STEP {index + 1}
-                      </span>
-                    )}
-                    {isTopLevel && (
-                      <span className="inline-block px-2 py-0.5 bg-indigo-500 text-white text-[9px] font-black rounded-full uppercase tracking-wider">
-                        MOST EFFICIENT
                       </span>
                     )}
                   </div>
