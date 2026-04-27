@@ -419,9 +419,12 @@ export function calculateRecommendedRoute(
   // --- Phase 1: 各ランクの同一ペアステージで独立に最適解を確定する ---
   // 上位ランクから順に処理し、そのランクの素材を全カバーできた場合のみコミットする。
   // 上位ランクが未カバーの場合、下位ランクもコミットしない（Phase 2で一括処理）。
-  const committedRoute: StageResult[] = [];
+  let currentRoutes: { stages: StageResult[], totalLevelValue: number }[] = [
+    { stages: [], totalLevelValue: 0 }
+  ];
   let coveredMask = 0;
   let allHigherRanksCovered = true; // 上位ランクがすべてカバーされているか
+  const K = 10; // 保持するルート候補の最大数
 
   for (const rank of sortedItemRanks) {
     if (!allHigherRanksCovered) break; // 上位が未カバーなら以降もPhase 2に回す
@@ -461,7 +464,6 @@ export function calculateRecommendedRoute(
 
     const smallAllMask = (1 << m) - 1;
     const smallTotalStates = smallAllMask + 1;
-    const K = 10;
 
     const dp: (DPNode[] | undefined)[] = new Array(smallTotalStates);
     dp[0] = [{ count: 0, totalLevelValue: 0, parentMask: -1, parentPathIndex: -1, stage: null }];
@@ -474,9 +476,25 @@ export function calculateRecommendedRoute(
       continue;
     }
 
-    // コミット
-    const route = reconstructPath(dp, smallAllMask, 0);
-    committedRoute.push(...route);
+    // 各ベースルートに対して、今回見つかった全ての経路を繋げて候補を更新
+    const nextRoutes: typeof currentRoutes = [];
+    const endNodes = dp[smallAllMask]!;
+    for (const base of currentRoutes) {
+      for (let i = 0; i < endNodes.length; i++) {
+        const route = reconstructPath(dp, smallAllMask, i);
+        nextRoutes.push({
+          stages: [...base.stages, ...route],
+          totalLevelValue: base.totalLevelValue + endNodes[i].totalLevelValue
+        });
+      }
+    }
+
+    // ステージ数が少ない順、同数ならワールドレベル合計が高い順にソートして上位K件を保持
+    nextRoutes.sort((a, b) => {
+      if (a.stages.length !== b.stages.length) return a.stages.length - b.stages.length;
+      return b.totalLevelValue - a.totalLevelValue;
+    });
+    currentRoutes = nextRoutes.slice(0, K);
 
     for (const origBit of rankBits) {
       coveredMask |= (1 << origBit);
@@ -509,7 +527,6 @@ export function calculateRecommendedRoute(
 
     const smallAllMask = (1 << m) - 1;
     const smallTotalStates = smallAllMask + 1;
-    const K = 10;
 
     const dp: (DPNode[] | undefined)[] = new Array(smallTotalStates);
     dp[0] = [{ count: 0, totalLevelValue: 0, parentMask: -1, parentPathIndex: -1, stage: null }];
@@ -517,14 +534,32 @@ export function calculateRecommendedRoute(
     runBitmaskDP(dp, smallStageData, smallTotalStates, K);
 
     if (dp[smallAllMask] && dp[smallAllMask]!.length > 0) {
-      const route = reconstructPath(dp, smallAllMask, 0);
-      committedRoute.push(...route);
+      const nextRoutes: typeof currentRoutes = [];
+      const endNodes = dp[smallAllMask]!;
+      for (const base of currentRoutes) {
+        for (let i = 0; i < endNodes.length; i++) {
+          const route = reconstructPath(dp, smallAllMask, i);
+          nextRoutes.push({
+            stages: [...base.stages, ...route],
+            totalLevelValue: base.totalLevelValue + endNodes[i].totalLevelValue
+          });
+        }
+      }
+
+      nextRoutes.sort((a, b) => {
+        if (a.stages.length !== b.stages.length) return a.stages.length - b.stages.length;
+        return b.totalLevelValue - a.totalLevelValue;
+      });
+      currentRoutes = nextRoutes.slice(0, K);
+    } else {
+      currentRoutes = [];
     }
   }
 
-  if (committedRoute.length === 0) return [];
+  // ルートが見つからなかった、または最初から[]だった場合
+  if (currentRoutes.length === 0 || currentRoutes[0].stages.length === 0) return [];
 
-  return [finalizeRoute(committedRoute, filteredStages)];
+  return currentRoutes.map(r => finalizeRoute(r.stages, filteredStages));
 }
 
 /**
