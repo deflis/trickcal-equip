@@ -154,8 +154,8 @@ export const StageList = ({ activeTab }: StageListProps) => {
           )}
         </div>
       )}
-      <div className="space-y-4">
-        {displayStages.slice(0, 15).map((result: StageResult, index) => {
+      <div className="space-y-4 max-h-125 overflow-y-auto pr-2 custom-scrollbar">
+        {displayStages.map((result: StageResult, index) => {
           const isTopLevel = activeTab === 'all' && index === 0;
           
           return (
