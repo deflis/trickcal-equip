@@ -218,7 +218,7 @@ export const BlueprintList = () => {
         </div>
       </div>
 
-      <div className="space-y-4 max-h-125 overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {mainItems.map((bp: BlueprintWithState) => (
             <BlueprintCard key={bp.id} bp={bp} />

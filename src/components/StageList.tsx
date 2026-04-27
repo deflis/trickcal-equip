@@ -154,7 +154,7 @@ export const StageList = ({ activeTab }: StageListProps) => {
           )}
         </div>
       )}
-      <div className="space-y-4 max-h-200 overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-4">
         {displayStages.map((result: StageResult, index) => {
           const isTopLevel = activeTab === 'all' && index === 0;
           
