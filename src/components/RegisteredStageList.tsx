@@ -27,17 +27,17 @@ export const RegisteredStageList = () => {
   };
 
   return (
-    <div className="mt-12 pt-8 border-t border-slate-200">
+    <div className="mt-12 pt-8 border-t border-border-subtle">
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between group py-2"
       >
-        <h3 className="text-slate-400 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 group-hover:text-slate-600 transition-colors">
+        <h3 className="text-text-secondary text-[10px] font-display font-bold uppercase tracking-widest flex items-center gap-2 group-hover:text-text-primary transition-colors">
           <LayoutList className="w-3 h-3" />
           データが入力されているステージ ({groupedStages.length})
         </h3>
         <div className={`transition-transform duration-200 ${isOpen ? '' : '-rotate-90'}`}>
-          <ChevronDown className="w-4 h-4 text-slate-300 group-hover:text-slate-500" />
+          <ChevronDown className="w-4 h-4 text-border-subtle group-hover:text-text-secondary" />
         </div>
       </button>
 
@@ -52,11 +52,11 @@ export const RegisteredStageList = () => {
                   onClick={() => toggleWorld(world)}
                   className="flex items-center gap-1.5 self-start group"
                 >
-                  <span className={`text-[10px] font-bold transition-colors ${isCollapsed ? 'text-slate-300 group-hover:text-slate-400' : 'text-slate-400 group-hover:text-indigo-500'}`}>
+                  <span className={`text-[10px] font-bold transition-colors ${isCollapsed ? 'text-text-secondary/50 group-hover:text-text-secondary' : 'text-text-secondary group-hover:text-primary'}`}>
                     WORLD {world}
                   </span>
                   <div className={`transition-transform duration-200 ${isCollapsed ? '-rotate-90' : ''}`}>
-                    <ChevronDown className={`w-3 h-3 ${isCollapsed ? 'text-slate-200' : 'text-slate-300'}`} />
+                    <ChevronDown className={`w-3 h-3 ${isCollapsed ? 'text-border-subtle' : 'text-text-secondary'}`} />
                   </div>
                 </button>
 
@@ -67,9 +67,9 @@ export const RegisteredStageList = () => {
                       return (
                         <div 
                           key={id} 
-                          className="flex flex-col items-center gap-1 bg-white px-2 py-1.5 rounded-lg border border-slate-100 shadow-xs hover:border-indigo-200 hover:shadow-sm transition-all"
+                          className="flex flex-col items-center gap-1 bg-surface px-2 py-1.5 rounded-md border border-border-subtle shadow-sm hover:border-primary/30 hover:-translate-y-[1px] transition-all"
                         >
-                          <span className="text-[9px] font-bold text-slate-400">
+                          <span className="text-[9px] font-bold text-text-secondary">
                             {world}-{id}
                           </span>
                           <div className="flex gap-1">

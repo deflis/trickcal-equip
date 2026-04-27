@@ -24,15 +24,15 @@ const RequiredItemChip = ({
 
   return (
     <span
-      className={`flex items-center gap-1.5 text-[10px] border px-2 py-1 rounded-md shadow-sm font-bold transition-colors ${
+      className={`flex items-center gap-1.5 text-[10px] border px-3 py-1 rounded-full shadow-sm font-bold transition-colors ${
         isPriority
-          ? 'bg-amber-50 border-amber-200 text-amber-700 ring-1 ring-amber-500/20'
-          : 'bg-white border-slate-100 text-slate-600'
+          ? 'bg-status-warning/10 border-status-warning/20 text-status-warning ring-1 ring-status-warning/20'
+          : 'bg-surface border-border-subtle text-text-secondary'
       }`}
     >
       <img src={getBlueprintIcon(blueprint)} alt={blueprint.name} className="w-4 h-4 object-contain" />
       <span className="truncate max-w-20">{blueprint.name}</span>
-      <span className={isPriority ? 'text-amber-600' : activeTab === 'recommended' ? 'text-emerald-600' : 'text-indigo-600'}>x{item.needed}</span>
+      <span className={isPriority ? 'text-status-warning' : activeTab === 'recommended' ? 'text-status-success' : 'text-primary'}>x{item.needed}</span>
       {isPriority && <span className="ml-0.5 text-[8px] opacity-70">★</span>}
     </span>
   );
@@ -41,7 +41,7 @@ const RequiredItemChip = ({
 const RequiredDrops = ({ result, activeTab }: { result: StageResult, activeTab: 'recommended' | 'all' }) => {
   return (
     <div className="mt-3">
-      <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mb-2">
+      <div className="text-[10px] font-bold text-text-secondary flex items-center gap-1 mb-2">
         <Info className="w-3 h-3" />
         ドロップする必要アイテム
       </div>
@@ -64,7 +64,7 @@ const OtherDropChip = ({ id }: { id: BlueprintId }) => {
   if (!blueprint) return null;
 
   return (
-    <span className="flex items-center gap-1 text-[9px] bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded text-slate-400">
+    <span className="flex items-center gap-1 text-[9px] bg-surface-bg border border-border-subtle px-2 py-0.5 rounded-full text-text-secondary">
       <img src={getBlueprintIcon(blueprint)} alt={blueprint.name} className="w-3 h-3 object-contain grayscale opacity-70" />
       {blueprint.name}
     </span>
@@ -81,8 +81,8 @@ const OtherDrops = ({ result }: { result: StageResult }) => {
   if (otherDropIds.length === 0) return null;
 
   return (
-    <div className="mt-2 pt-2 border-t border-slate-50">
-      <div className="text-[9px] font-bold text-slate-300 mb-1.5">
+    <div className="mt-2 pt-2 border-t border-border-subtle">
+      <div className="text-[9px] font-bold text-text-secondary/70 mb-1.5">
         副産物
       </div>
       <div className="flex flex-wrap gap-1 opacity-70">
@@ -105,8 +105,8 @@ export const StageList = ({ activeTab }: StageListProps) => {
 
   if (displayStages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-slate-300 text-center">
-        <div className="bg-slate-50 p-6 rounded-full mb-4">
+      <div className="flex flex-col items-center justify-center py-24 text-text-secondary/50 text-center">
+        <div className="bg-surface-bg p-6 rounded-full mb-4 border border-border-subtle">
           <Info className="w-12 h-12 opacity-20" />
         </div>
         <p className="text-sm font-medium">到達範囲内にドロップステージが<br />見つかりません</p>
@@ -118,7 +118,7 @@ export const StageList = ({ activeTab }: StageListProps) => {
     <>
       {activeTab === 'recommended' && (
         <div className="space-y-4 mb-6">
-          <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-[11px] text-emerald-700 font-medium">
+          <div className="p-3 bg-status-success/5 rounded-xl border border-status-success/20 text-[11px] text-status-success font-medium">
             すべての必要アイテムを網羅する、効率的なステージの組み合わせです。
           </div>
 
@@ -135,8 +135,8 @@ export const StageList = ({ activeTab }: StageListProps) => {
                     onClick={() => setSelectedRouteIndex(i)}
                     className={`flex-shrink-0 px-4 py-2.5 rounded-xl border-2 transition-all text-left ${
                       isSelected
-                        ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
-                        : 'bg-white border-emerald-100 text-emerald-700 hover:border-emerald-200'
+                        ? 'bg-status-success border-status-success text-white shadow-md'
+                        : 'bg-surface border-status-success/20 text-status-success hover:border-status-success/40 hover:bg-status-success/5'
                     }`}
                   >
                     <div className="text-[10px] font-black uppercase tracking-wider opacity-80 mb-0.5">
@@ -159,22 +159,22 @@ export const StageList = ({ activeTab }: StageListProps) => {
           return (
             <div
               key={result.id}
-              className={`relative p-4 rounded-xl border-2 transition-all ${
+              className={`relative p-4 rounded-xl border-2 transition-all duration-200 hover:-translate-y-[2px] hover:shadow-card-hover ${
                 activeTab === 'recommended'
-                  ? 'border-emerald-100 bg-white hover:border-emerald-200'
-                  : 'border-slate-100 bg-white hover:border-indigo-100'
+                  ? 'border-status-success/20 bg-surface hover:border-status-success/40'
+                  : 'border-border-subtle bg-surface hover:border-primary/30'
               }`}
             >
               <div className="flex justify-between items-start">
                 <div>
                   <div className="flex gap-1 flex-wrap mb-1">
                     {activeTab === 'recommended' && (
-                      <span className="inline-block px-2 py-0.5 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase tracking-wider">
+                      <span className="inline-block px-2 py-0.5 bg-status-success text-white text-[9px] font-black rounded-full uppercase tracking-wider">
                         STEP {index + 1}
                       </span>
                     )}
                   </div>
-                  <h3 className="font-black text-xl text-slate-800 flex items-center gap-2">
+                  <h3 className="font-display font-bold tracking-tight text-xl text-text-primary flex items-center gap-2">
                     World {result.id}
                   </h3>
                 </div>

@@ -1,4 +1,4 @@
-import { Trophy, Sparkles, Trash2, RefreshCcw, CheckCircle2 } from 'lucide-react';
+import { Trophy, Trash2, RefreshCcw, CheckCircle2 } from 'lucide-react';
 import { BLUEPRINTS, RANK_CONFIG } from '../data/blueprints';
 import type { AttackType, Blueprint, BlueprintId } from '../data/types';
 import { useStore } from '../store';
@@ -11,38 +11,38 @@ const StageProgressInput = () => {
   const setMaxStageNum = useStore(s => s.setMaxStageNum);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/10 p-4 rounded-xl border border-white/20 shadow-inner">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-bg p-4 rounded-lg border border-border-subtle shadow-sm">
       <div className="flex items-center gap-2">
-        <div className="bg-amber-400 p-1.5 rounded-lg text-indigo-900 shadow-sm">
+        <div className="bg-status-warning/10 p-1.5 rounded-md text-status-warning shadow-sm">
           <Trophy className="w-4 h-4" />
         </div>
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-widest opacity-90">最高到達ステージ</h3>
-          <p className="text-[10px] opacity-60">これ以降のドロップは無視されます</p>
+          <h3 className="text-xs font-display font-bold uppercase tracking-widest text-text-primary">最高到達ステージ</h3>
+          <p className="text-[10px] text-text-secondary mt-0.5">これ以降のドロップは無視されます</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 bg-indigo-950/50 px-3 py-1.5 rounded-lg border border-white/10">
-          <span className="text-[10px] font-bold opacity-60">WORLD</span>
+        <div className="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-md border border-border-subtle focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/12 transition-all">
+          <span className="text-[10px] font-bold text-text-secondary">WORLD</span>
           <input
             type="number"
             value={maxWorld}
             onChange={(e) => {
               setMaxWorld(Math.max(1, parseSafeInt(e.target.value)));
             }}
-            className="bg-transparent w-10 text-center font-black text-amber-400 outline-none"
+            className="bg-transparent w-10 text-center font-black text-primary outline-none"
           />
         </div>
-        <span className="text-white opacity-40">—</span>
-        <div className="flex items-center gap-1.5 bg-indigo-950/50 px-3 py-1.5 rounded-lg border border-white/10">
-          <span className="text-[10px] font-bold opacity-60">STAGE</span>
+        <span className="text-border-subtle font-bold">—</span>
+        <div className="flex items-center gap-1.5 bg-surface px-3 py-1.5 rounded-md border border-border-subtle focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/12 transition-all">
+          <span className="text-[10px] font-bold text-text-secondary">STAGE</span>
           <input
             type="number"
             value={maxStageNum}
             onChange={(e) => {
               setMaxStageNum(Math.max(1, parseSafeInt(e.target.value)));
             }}
-            className="bg-transparent w-8 text-center font-black text-amber-400 outline-none"
+            className="bg-transparent w-8 text-center font-black text-primary outline-none"
           />
         </div>
       </div>
@@ -97,14 +97,14 @@ const CollectionModeSection = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 opacity-90">
-          <CheckCircle2 className="w-4 h-4" />
+        <h3 className="text-sm font-display font-bold uppercase tracking-widest flex items-center gap-2 text-text-primary">
+          <CheckCircle2 className="w-4 h-4 text-status-success" />
           収集モード（1人分）
         </h3>
         {hasRequirements && (
           <button
             onClick={onClearAll}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-bold transition-all shadow-md active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-status-error hover:bg-red-600 text-white rounded-md text-xs font-bold transition-all shadow-sm hover:shadow-card-hover hover:-translate-y-[1px]"
           >
             <Trash2 className="w-3.5 h-3.5" /> 全リセット
           </button>
@@ -113,34 +113,34 @@ const CollectionModeSection = () => {
 
       {selectedRank !== 'All' && config ? (
         <div className="space-y-3">
-          <div className="bg-white/5 rounded-xl p-3 border border-white/10 space-y-2">
-            <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">装備を選択</p>
+          <div className="bg-surface-bg rounded-lg p-3 border border-border-subtle space-y-2">
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">装備を選択</p>
 
             <div className="flex flex-wrap gap-2">
               {isTypeSelected && (
                 <button
                   onClick={() => setSelectedAttackType('all')}
-                  className="px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border bg-white/5 border-white/20 text-white/60 hover:bg-white/10"
+                  className="px-2.5 py-1 rounded-md text-[11px] font-bold transition-all border bg-surface border-border-subtle text-text-secondary hover:bg-surface-bg"
                 >
                   すべて
                 </button>
               )}
               <button
                 onClick={() => handleAttackTypeSelect('physical')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all border ${
                   selectedAttackType === 'physical'
-                    ? 'bg-amber-400/30 border-amber-400/50 text-amber-200'
-                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                    ? 'bg-status-warning/10 border-status-warning/30 text-status-warning'
+                    : 'bg-surface border-border-subtle text-text-secondary hover:bg-surface-bg'
                 }`}
               >
                 物理装備
               </button>
               <button
                 onClick={() => handleAttackTypeSelect('magic')}
-                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all border ${
                   selectedAttackType === 'magic'
-                    ? 'bg-purple-400/30 border-purple-400/50 text-purple-200'
-                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                    ? 'bg-primary/10 border-primary/30 text-primary'
+                    : 'bg-surface border-border-subtle text-text-secondary hover:bg-surface-bg'
                 }`}
               >
                 魔法装備
@@ -148,17 +148,17 @@ const CollectionModeSection = () => {
             </div>
 
             {isTypeSelected && targetBlueprints.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1 border-t border-white/10">
+              <div className="flex flex-wrap gap-2 pt-2 mt-2 border-t border-border-subtle">
                 {targetBlueprints.map(bp => {
                   const isOn = items.some(i => i.id === bp.id && i.req > 0);
                   return (
                     <button
                       key={bp.id}
                       onClick={() => handleItemToggle(bp, isOn)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all border ${
+                      className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all border ${
                         isOn
-                          ? 'bg-white/20 border-white/30 text-white'
-                          : 'bg-white/5 border-white/10 text-white/40 line-through'
+                          ? 'bg-primary border-primary text-white shadow-sm'
+                          : 'bg-surface border-border-subtle text-text-secondary/50 line-through hover:bg-surface-bg hover:text-text-secondary'
                       }`}
                     >
                       {bp.type}
@@ -170,7 +170,7 @@ const CollectionModeSection = () => {
           </div>
 
           <div className="flex justify-between items-center px-1">
-            <div className="flex items-center gap-4 text-[10px] opacity-70 font-bold text-amber-200">
+            <div className="flex items-center gap-4 text-[10px] font-bold text-text-secondary">
               <span>R{selectedRank}: {config.main}枚</span>
               {hasSub && (
                 <span>R{selectedRank - 1}: {config.sub}枚</span>
@@ -178,7 +178,7 @@ const CollectionModeSection = () => {
             </div>
             <button
               onClick={() => hasSub ? onClearRankWithSub(selectedRank) : onClearRank(selectedRank)}
-              className="text-[10px] flex items-center gap-1 text-indigo-200 hover:text-white transition-colors font-bold"
+              className="text-[10px] flex items-center gap-1 text-primary/70 hover:text-primary transition-colors font-bold"
             >
               <RefreshCcw className="w-3 h-3" />
               {hasSub
@@ -188,8 +188,8 @@ const CollectionModeSection = () => {
           </div>
         </div>
       ) : (
-        <div className="py-6 text-center border border-white/10 rounded-xl bg-white/5">
-          <p className="text-xs opacity-60">設計図リストからランクを選択してください</p>
+        <div className="py-6 text-center border border-border-subtle rounded-lg bg-surface-bg">
+          <p className="text-xs text-text-secondary">設計図リストからランクを選択してください</p>
         </div>
       )}
     </div>
@@ -198,11 +198,7 @@ const CollectionModeSection = () => {
 
 export const QuickActionPanel = () => {
   return (
-    <div className="bg-linear-to-br from-indigo-700 to-indigo-900 rounded-2xl shadow-lg border border-indigo-500 p-5 text-white overflow-hidden relative">
-      <div className="absolute top-0 right-0 p-4 opacity-10">
-        <Sparkles className="w-20 h-20" />
-      </div>
-      
+    <div className="bg-surface rounded-xl shadow-sm border border-border-subtle p-6 text-text-primary">
       <div className="relative z-10 space-y-5">
         <StageProgressInput />
         <CollectionModeSection />

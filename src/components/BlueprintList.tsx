@@ -27,38 +27,38 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
 
   return (
     <div
-      className={`flex flex-col p-3 rounded-xl border transition-all ${
+      className={`flex flex-col p-3 rounded-xl border transition-all duration-200 hover:shadow-card-hover hover:-translate-y-[2px] ${
         shortage > 0
-          ? 'border-indigo-300 bg-indigo-50/30'
+          ? 'border-primary/30 bg-primary/5'
           : isComplete
-          ? 'border-green-300 bg-green-50/30'
+          ? 'border-status-success/30 bg-status-success/5'
           : held > 0
-          ? 'border-slate-300 bg-slate-50'
-          : 'border-slate-100 bg-slate-50'
+          ? 'border-border-subtle bg-surface-bg'
+          : 'border-transparent bg-surface-bg'
       }`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="shrink-0 w-10 h-10 bg-white rounded-lg border border-slate-100 flex items-center justify-center p-0.5 shadow-sm">
+          <div className="shrink-0 w-10 h-10 bg-surface rounded-lg border border-border-subtle flex items-center justify-center p-0.5 shadow-sm">
             <img src={getBlueprintIcon(bp)} alt={bp.name} className="w-full h-full object-contain" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className={`font-bold text-xs truncate ${shortage > 0 ? 'text-indigo-900' : isComplete ? 'text-green-800' : 'text-slate-700'}`}>
+            <div className={`font-bold text-xs truncate ${shortage > 0 ? 'text-primary' : isComplete ? 'text-status-success' : 'text-text-primary'}`}>
               {bp.name}
             </div>
-            <div className="text-[10px] text-slate-400 mt-0.5">Rank {bp.rank}</div>
+            <div className="text-[10px] text-text-secondary mt-0.5">Rank {bp.rank}</div>
           </div>
         </div>
 
         {req > 0 && (
           <div className="shrink-0">
             {isComplete ? (
-              <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-green-100 border border-green-200 text-green-700 text-[10px] font-bold">
+               <span className="flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-status-success/10 border border-status-success/20 text-status-success text-[10px] font-bold">
                 <Check className="w-3 h-3" />
                 完了
               </span>
             ) : (
-              <span className="flex items-baseline gap-1 px-2 py-0.5 rounded-full bg-orange-100 border border-orange-200 text-orange-700 text-[10px] font-bold">
+              <span className="flex items-baseline gap-1 px-2 py-0.5 rounded-full bg-status-warning/10 border border-status-warning/20 text-status-warning text-[10px] font-bold">
                 不足
                 <span className="text-xs font-black">{shortage}</span>
               </span>
@@ -69,9 +69,9 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
 
       <div className="grid grid-cols-2 gap-2 mt-3">
         <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-[10px] font-bold text-indigo-500 px-0.5">必要</span>
-          <div className="flex items-center bg-white rounded-lg shadow-sm border border-indigo-100 overflow-hidden w-full">
-            <button onClick={() => onUpdate(bp.id, -1)} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 transition-colors shrink-0">
+          <span className="text-[10px] font-bold text-primary px-0.5">必要</span>
+          <div className="flex items-center bg-surface rounded-md shadow-sm border border-primary/20 overflow-hidden w-full transition-colors focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/12">
+            <button onClick={() => onUpdate(bp.id, -1)} className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors shrink-0">
               <Minus className="w-3.5 h-3.5" />
             </button>
             <input
@@ -80,18 +80,18 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
               value={req === 0 ? '' : req}
               placeholder="0"
               onChange={(e) => onSetValue(bp.id, e.target.value)}
-              className="flex-1 w-full min-w-0 text-center font-bold text-sm text-indigo-600 focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="flex-1 w-full min-w-0 text-center font-bold text-sm text-primary focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <button onClick={() => onUpdate(bp.id, 1)} className="p-1.5 text-indigo-500 hover:text-indigo-700 hover:bg-slate-50 transition-colors shrink-0">
+            <button onClick={() => onUpdate(bp.id, 1)} className="p-1.5 text-primary hover:text-primary-hover hover:bg-primary/5 transition-colors shrink-0">
               <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
         <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-[10px] font-bold text-slate-500 px-0.5">所持</span>
-          <div className="flex items-center bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden w-full">
-            <button onClick={() => onUpdateHolding(bp.id, -1)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors shrink-0">
+          <span className="text-[10px] font-bold text-text-secondary px-0.5">所持</span>
+          <div className="flex items-center bg-surface rounded-md shadow-sm border border-border-subtle overflow-hidden w-full transition-colors focus-within:border-primary focus-within:ring-[3px] focus-within:ring-primary/12">
+            <button onClick={() => onUpdateHolding(bp.id, -1)} className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors shrink-0">
               <Minus className="w-3.5 h-3.5" />
             </button>
             <input
@@ -100,9 +100,9 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
               value={held === 0 ? '' : held}
               placeholder="0"
               onChange={(e) => onSetHoldingValue(bp.id, e.target.value)}
-              className="flex-1 w-full min-w-0 text-center font-bold text-sm text-slate-600 focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="flex-1 w-full min-w-0 text-center font-bold text-sm text-text-secondary focus:outline-none bg-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <button onClick={() => onUpdateHolding(bp.id, 1)} className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors shrink-0">
+            <button onClick={() => onUpdateHolding(bp.id, 1)} className="p-1.5 text-text-secondary hover:text-primary hover:bg-primary/5 transition-colors shrink-0">
               <Plus className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -110,11 +110,11 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
       </div>
 
       {showActions && (
-        <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border-subtle">
           {held > 0 && req > 0 && (
             <button
               onClick={() => onConsumeHolding(bp.id)}
-              className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded transition-colors"
+              className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold text-status-warning bg-status-warning/10 hover:bg-status-warning/20 border border-status-warning/20 rounded transition-colors"
               title="所持数を必要数に充当して消費"
             >
               <Zap className="w-2.5 h-2.5" />
@@ -124,7 +124,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
           {req > 0 && (
             <button
               onClick={() => onClearItem(bp.id)}
-              className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition-colors"
+              className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-primary/70 hover:text-primary hover:bg-primary/10 rounded transition-colors"
               title="必要数をリセット"
             >
               <Trash2 className="w-3 h-3" />
@@ -134,7 +134,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
           {held > 0 && (
             <button
               onClick={() => onClearHolding(bp.id)}
-              className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+              className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-text-secondary hover:text-status-error hover:bg-status-error/10 rounded transition-colors"
               title="所持数をリセット"
             >
               <Trash2 className="w-3 h-3" />
@@ -175,10 +175,10 @@ export const BlueprintList = () => {
   const hasSubItems = subItems.length > 0;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <div className="bg-surface rounded-xl border border-border-subtle p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center gap-2 text-slate-700">
-          <Filter className="text-indigo-500 w-5 h-5" />
+        <h2 className="text-lg font-display font-semibold flex items-center gap-2 text-text-primary tracking-tight">
+          <Filter className="text-primary w-5 h-5" />
           設計図リスト
         </h2>
       </div>
@@ -191,8 +191,8 @@ export const BlueprintList = () => {
               onClick={() => onRankChange(rank)}
               className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all shrink-0 ${
                 selectedRank === rank
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200 shadow-sm'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-surface-bg text-text-secondary border border-border-subtle hover:bg-surface shadow-sm'
               }`}
             >
               {rank === 'All' ? 'すべて' : `Rank${rank}`}
@@ -207,8 +207,8 @@ export const BlueprintList = () => {
               onClick={() => onAttackTypeChange(type.value)}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
                 selectedAttackType === type.value
-                  ? 'bg-amber-100 text-amber-700 border-2 border-amber-300 shadow-sm'
-                  : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-slate-200'
+                  ? 'bg-status-warning/10 text-status-warning border-2 border-status-warning shadow-sm'
+                  : 'bg-surface text-text-secondary border-2 border-border-subtle hover:bg-surface-bg'
               }`}
             >
               <type.icon className="w-3.5 h-3.5" />
@@ -228,11 +228,11 @@ export const BlueprintList = () => {
         {hasSubItems && (
           <>
             <div className="flex items-center gap-2">
-              <div className="h-px flex-1 bg-slate-200" />
-              <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+              <div className="h-px flex-1 bg-border-subtle" />
+              <span className="text-xs font-bold text-text-secondary bg-surface-bg border border-border-subtle px-2 py-0.5 rounded-full">
                 Rank {subRank}（下位ランク）
               </span>
-              <div className="h-px flex-1 bg-slate-200" />
+              <div className="h-px flex-1 bg-border-subtle" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {subItems.map((bp: BlueprintWithState) => (

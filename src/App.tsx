@@ -7,7 +7,7 @@ import { RegisteredStageList } from './components/RegisteredStageList';
 
 const App = () => {
   return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans text-slate-900">
+    <div className="min-h-screen bg-surface-bg p-4 md:p-8 font-body text-text-primary">
       <div className="max-w-6xl mx-auto">
 
         <Header />
