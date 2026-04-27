@@ -133,25 +133,25 @@ export function sortStages(stages: StageResult[]): StageResult[] {
 
 /**
  * ステージ内のアイテムから優先アイテムを決定する。
- * 最高ランク → 同ランクなら必要数が最も少ないものを優先する。
+ * 必要数が最も少ないもの → 同数ならランクが低いものを優先する。
  * 中間配列を作らず1パスで完了する。
  */
-function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResult {
+export function addPriorityInfo(result: Omit<StageResult, 'priorityItemId'>): StageResult {
   if (result.matchingItems.length === 0) return result;
 
   let priorityId: BlueprintId | undefined;
-  let bestRank = -1;
+  let bestRank = Infinity;
   let bestNeeded = Infinity;
   let tieBreak = false;
 
   for (const mi of result.matchingItems) {
     const rank = getBlueprintRank(mi.id);
-    if (rank > bestRank || (rank === bestRank && mi.needed < bestNeeded)) {
-      bestRank = rank;
+    if (mi.needed < bestNeeded || (mi.needed === bestNeeded && rank < bestRank)) {
       bestNeeded = mi.needed;
+      bestRank = rank;
       priorityId = mi.id;
       tieBreak = false;
-    } else if (rank === bestRank && mi.needed === bestNeeded) {
+    } else if (mi.needed === bestNeeded && rank === bestRank) {
       tieBreak = true;
     }
   }
