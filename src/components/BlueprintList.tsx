@@ -111,16 +111,6 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
 
       {showActions && (
         <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border-subtle">
-          {req > 0 && held < req && (
-            <button
-              onClick={() => onSetHoldingValue(bp.id, String(req))}
-              className="flex items-center gap-0.5 px-1.5 py-0.5 text-caption font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded transition-colors"
-              title="所持数を必要数まで一気に増やす"
-            >
-              <ChevronsUp className="w-2.5 h-2.5" />
-              MAX
-            </button>
-          )}
           {held > 0 && req > 0 && (
             <button
               onClick={() => onConsumeHolding(bp.id)}
@@ -149,6 +139,16 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
             >
               <Trash2 className="w-3 h-3" />
               所持
+            </button>
+          )}
+          {req > 0 && held < req && (
+            <button
+              onClick={() => onSetHoldingValue(bp.id, String(req))}
+              className="flex items-center gap-0.5 px-1.5 py-0.5 text-caption font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded transition-colors"
+              title="所持数を必要数まで一気に増やす"
+            >
+              <ChevronsUp className="w-2.5 h-2.5" />
+              すべて所持
             </button>
           )}
         </div>
