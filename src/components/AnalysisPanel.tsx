@@ -9,6 +9,8 @@ export const AnalysisPanel = () => {
   const maxStageNum = useStore(state => state.maxStageNum);
   const showDuplicates = useStore(state => state.showDuplicates);
   const setShowDuplicates = useStore(state => state.setShowDuplicates);
+  const routeSortOrder = useStore(state => state.routeSortOrder);
+  const setRouteSortOrder = useStore(state => state.setRouteSortOrder);
   const totalJoseki = useStore(selectTotalJoseki);
   const [activeTab, setActiveTab] = useState<'recommended' | 'all'>('recommended');
 
@@ -20,6 +22,19 @@ export const AnalysisPanel = () => {
         推奨周回ステージ
       </h2>
       <div className="flex items-center gap-3">
+        {activeTab === 'recommended' && (
+          <label className="flex items-center gap-2 cursor-pointer group mr-2">
+            <span className="text-caption font-bold text-text-secondary group-hover:text-status-success transition-colors">
+              {routeSortOrder === 'efficiency' ? '消費数順' : 'ランク順'}
+            </span>
+            <div
+              onClick={() => setRouteSortOrder(routeSortOrder === 'efficiency' ? 'rank' : 'efficiency')}
+              className={`relative w-8 h-4 rounded-full transition-colors ${routeSortOrder === 'rank' ? 'bg-status-success' : 'bg-border-subtle'}`}
+            >
+              <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-surface rounded-full transition-transform ${routeSortOrder === 'rank' ? 'translate-x-4' : 'translate-x-0'}`} />
+            </div>
+          </label>
+        )}
         {activeTab === 'all' && (
           <label className="flex items-center gap-2 cursor-pointer group">
             <span className="text-caption font-bold text-text-secondary group-hover:text-primary transition-colors">
