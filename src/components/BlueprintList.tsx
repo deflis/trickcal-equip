@@ -1,4 +1,4 @@
-import { Filter, Trash2, Minus, Plus, Zap, Swords, Sparkles, Layers, Check, type LucideIcon } from 'lucide-react';
+import { Filter, Trash2, Minus, Plus, Zap, Swords, Sparkles, Layers, Check, ChevronsUp, type LucideIcon } from 'lucide-react';
 import type { AttackType, RankId, BlueprintWithState } from '../data/types';
 import { useStore } from '../store';
 import { selectMainItems, selectSubItems } from '../selectors';
@@ -111,6 +111,16 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
 
       {showActions && (
         <div className="flex items-center justify-end gap-1 mt-2 pt-2 border-t border-border-subtle">
+          {req > 0 && held < req && (
+            <button
+              onClick={() => onSetHoldingValue(bp.id, String(req))}
+              className="flex items-center gap-0.5 px-1.5 py-0.5 text-caption font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 rounded transition-colors"
+              title="所持数を必要数まで一気に増やす"
+            >
+              <ChevronsUp className="w-2.5 h-2.5" />
+              MAX
+            </button>
+          )}
           {held > 0 && req > 0 && (
             <button
               onClick={() => onConsumeHolding(bp.id)}
