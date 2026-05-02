@@ -11,6 +11,7 @@ const selectMaxWorld = (state: AppState) => state.maxWorld;
 const selectMaxStageNum = (state: AppState) => state.maxStageNum;
 const selectShowDuplicates = (state: AppState) => state.showDuplicates;
 const selectSelectedRouteIndex = (state: AppState) => state.selectedRouteIndex;
+const selectRouteSortOrder = (state: AppState) => state.routeSortOrder;
 
 /**
  * ID からアイテムの状態を引ける Map を提供
@@ -131,9 +132,9 @@ export const selectAllStages = createSelector(
 );
 
 export const selectRecommendedRoutes = createSelector(
-  [selectAvailableStages],
-  (allStages) => {
-    return calculateRecommendedRoute(allStages);
+  [selectAvailableStages, selectRouteSortOrder],
+  (allStages, routeSortOrder) => {
+    return calculateRecommendedRoute(allStages, routeSortOrder);
   }
 );
 

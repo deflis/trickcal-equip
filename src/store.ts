@@ -12,6 +12,7 @@ export interface AppState {
   maxStageNum: number;
   showDuplicates: boolean;
   selectedRouteIndex: number;
+  routeSortOrder: 'efficiency' | 'rank';
 
   // Actions
   setItems: (items: ItemState[]) => void;
@@ -21,19 +22,20 @@ export interface AppState {
   setMaxStageNum: (num: number) => void;
   setShowDuplicates: (show: boolean) => void;
   setSelectedRouteIndex: (index: number) => void;
+  setRouteSortOrder: (order: 'efficiency' | 'rank') => void;
 
   updateReq: (id: BlueprintId, delta: number) => void;
   setReqValue: (id: BlueprintId, value: string) => void;
   updateHolding: (id: BlueprintId, delta: number) => void;
   setHoldingValue: (id: BlueprintId, value: string) => void;
-  
+
   clearItem: (id: BlueprintId) => void;
   clearHolding: (id: BlueprintId) => void;
   consumeHolding: (id: BlueprintId) => void;
   clearAll: () => void;
   clearRank: (rank: RankId) => void;
   clearRankWithSub: (rank: RankId) => void;
-  
+
   applyRankConfig: (rank: RankId, attackType: AttackType | 'all') => void;
 }
 
@@ -58,6 +60,7 @@ export const useStore = create<AppState>()(
       maxStageNum: 10,
       showDuplicates: false,
       selectedRouteIndex: 0,
+      routeSortOrder: 'efficiency',
 
       setItems: (items) => set({ items }),
       setSelectedRank: (selectedRank) => set({ selectedRank }),
@@ -66,6 +69,7 @@ export const useStore = create<AppState>()(
       setMaxStageNum: (maxStageNum) => set({ maxStageNum }),
       setShowDuplicates: (showDuplicates) => set({ showDuplicates }),
       setSelectedRouteIndex: (selectedRouteIndex) => set({ selectedRouteIndex }),
+      setRouteSortOrder: (routeSortOrder) => set({ routeSortOrder }),
 
       updateReq: (id, delta) => set((state) => ({
         items: updateItemInList(state.items, id, (i) => ({ ...i, req: Math.max(0, i.req + delta) }))
@@ -121,7 +125,7 @@ export const useStore = create<AppState>()(
 
       applyRankConfig: (rank, selectedAttackType) => {
         if (selectedAttackType === 'all') return;
-        
+
         const config = RANK_CONFIG[rank];
         if (!config) return;
 
@@ -137,7 +141,7 @@ export const useStore = create<AppState>()(
           });
 
           const nextItems = [...baseItems];
-          
+
           BLUEPRINTS
             .filter(b => (b.rank === rank || b.rank === rank - 1) && (b.attackType === selectedAttackType || b.attackType === 'both'))
             .forEach(b => {
@@ -151,7 +155,7 @@ export const useStore = create<AppState>()(
                 }
               }
             });
-          
+
           return { items: nextItems.filter(i => i.req > 0 || i.held > 0) };
         });
       }

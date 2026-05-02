@@ -9,6 +9,8 @@ export const AnalysisPanel = () => {
   const maxStageNum = useStore(state => state.maxStageNum);
   const showDuplicates = useStore(state => state.showDuplicates);
   const setShowDuplicates = useStore(state => state.setShowDuplicates);
+  const routeSortOrder = useStore(state => state.routeSortOrder);
+  const setRouteSortOrder = useStore(state => state.setRouteSortOrder);
   const totalJoseki = useStore(selectTotalJoseki);
   const [activeTab, setActiveTab] = useState<'recommended' | 'all'>('recommended');
 
@@ -20,18 +22,32 @@ export const AnalysisPanel = () => {
         推奨周回ステージ
       </h2>
       <div className="flex items-center gap-3">
+        {activeTab === 'recommended' && (
+          <select
+            value={routeSortOrder}
+            onChange={(e) => setRouteSortOrder(e.target.value as 'efficiency' | 'rank')}
+            className="text-caption font-bold text-text-secondary bg-surface border border-border-subtle rounded-md px-2 py-1 outline-none focus:border-status-success focus:ring-1 focus:ring-status-success/30 cursor-pointer"
+          >
+            <option value="efficiency">消費数順</option>
+            <option value="rank">ランク順</option>
+          </select>
+        )}
         {activeTab === 'all' && (
-          <label className="flex items-center gap-2 cursor-pointer group">
+          <button
+            type="button"
+            onClick={() => setShowDuplicates(!showDuplicates)}
+            className="flex items-center gap-2 cursor-pointer group focus:outline-none"
+            aria-pressed={showDuplicates}
+          >
             <span className="text-caption font-bold text-text-secondary group-hover:text-primary transition-colors">
               {showDuplicates ? '重複あり' : '重複なし'}
             </span>
             <div 
-              onClick={() => setShowDuplicates(!showDuplicates)}
               className={`relative w-8 h-4 rounded-full transition-colors ${showDuplicates ? 'bg-primary' : 'bg-border-subtle'}`}
             >
               <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-surface rounded-full transition-transform ${showDuplicates ? 'translate-x-4' : 'translate-x-0'}`} />
             </div>
-          </label>
+          </button>
         )}
         <div className="text-overline uppercase bg-surface-bg border border-border-subtle px-2 py-1 rounded-md text-text-secondary font-bold">
           UP TO {maxWorld}-{maxStageNum}

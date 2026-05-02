@@ -276,7 +276,8 @@ function popcount32(n: number): number {
  *   2. 同数ならワールドレベル合計が高い方（高難度ステージ優先 = 効率が良い傾向）
  */
 export function calculateRecommendedRoute(
-  availableStages: StageResult[]
+  availableStages: StageResult[],
+  routeSortOrder: 'efficiency' | 'rank' = 'efficiency'
 ): StageResult[][] {
   // 1. 重複を解除 (計算量を減らすため、各組み合わせで最もワールドレベルが高いものだけを残す)
   const filteredStages = deduplicateStagesForRoute(availableStages);
@@ -292,7 +293,7 @@ export function calculateRecommendedRoute(
 
   // 素材数が多い場合は貪欲法に切り替える
   if (n > 16) {
-    return [calculateGreedyRoute(filteredStages, targetItems)];
+    return [calculateGreedyRoute(filteredStages, targetItems, routeSortOrder)];
   }
 
   // 各ステージのビットマスクとランク情報を事前計算
@@ -440,7 +441,7 @@ export function calculateRecommendedRoute(
   const allMask = (1 << n) - 1;
   const bestResults = dfs(allMask);
 
-  return bestResults.map(res => finalizeRoute(res.stages, filteredStages));
+  return bestResults.map(res => finalizeRoute(res.stages, filteredStages, routeSortOrder));
 }
 
 /**
@@ -454,7 +455,8 @@ export function calculateRecommendedRoute(
  */
 function calculateGreedyRoute(
   availableStages: StageResult[],
-  targetItems: string[]
+  targetItems: string[],
+  routeSortOrder: 'efficiency' | 'rank'
 ): StageResult[] {
   const route: StageResult[] = [];
   const remaining = new Set(targetItems); // まだカバーされていない素材のセット
@@ -494,7 +496,7 @@ function calculateGreedyRoute(
     bestStage.matchingItems.forEach(m => remaining.delete(m.id));
   }
 
-  return finalizeRoute(route, availableStages);
+  return finalizeRoute(route, availableStages, routeSortOrder);
 }
 
 /**
@@ -531,7 +533,8 @@ function getStageMetrics(stage: StageResult): { maxRank: number, minNeeded: numb
  */
 function finalizeRoute(
   bestRoute: StageResult[],
-  availableStages: StageResult[]
+  availableStages: StageResult[],
+  routeSortOrder: 'efficiency' | 'rank'
 ): StageResult[] {
   // 全素材の初期必要数をマップに保持
   const remainingNeeded = new Map<string, number>();
@@ -547,11 +550,19 @@ function finalizeRoute(
     metrics: getStageMetrics(s)
   }));
 
-  stagesWithMetrics.sort((a, b) =>
-    a.metrics.minNeeded - b.metrics.minNeeded ||
-    b.metrics.maxRank - a.metrics.maxRank ||
-    b.metrics.levelValue - a.metrics.levelValue
-  );
+  if (routeSortOrder === 'rank') {
+    stagesWithMetrics.sort((a, b) =>
+      b.metrics.maxRank - a.metrics.maxRank ||
+      a.metrics.minNeeded - b.metrics.minNeeded ||
+      b.metrics.levelValue - a.metrics.levelValue
+    );
+  } else {
+    stagesWithMetrics.sort((a, b) =>
+      a.metrics.minNeeded - b.metrics.minNeeded ||
+      b.metrics.maxRank - a.metrics.maxRank ||
+      b.metrics.levelValue - a.metrics.levelValue
+    );
+  }
 
   return stagesWithMetrics
     .map(({ stage: s }) => {
