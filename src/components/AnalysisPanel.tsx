@@ -23,21 +23,14 @@ export const AnalysisPanel = () => {
       </h2>
       <div className="flex items-center gap-3">
         {activeTab === 'recommended' && (
-          <button
-            type="button"
-            onClick={() => setRouteSortOrder(routeSortOrder === 'efficiency' ? 'rank' : 'efficiency')}
-            className="flex items-center gap-2 cursor-pointer group focus:outline-none"
-            aria-pressed={routeSortOrder === 'rank'}
+          <select
+            value={routeSortOrder}
+            onChange={(e) => setRouteSortOrder(e.target.value as 'efficiency' | 'rank')}
+            className="text-caption font-bold text-text-secondary bg-surface border border-border-subtle rounded-md px-2 py-1 outline-none focus:border-status-success focus:ring-1 focus:ring-status-success/30 cursor-pointer"
           >
-            <span className="text-caption font-bold text-text-secondary group-hover:text-status-success transition-colors">
-              {routeSortOrder === 'efficiency' ? '消費数順' : 'ランク順'}
-            </span>
-            <div
-              className={`relative w-8 h-4 rounded-full transition-colors ${routeSortOrder === 'rank' ? 'bg-status-success' : 'bg-border-subtle'}`}
-            >
-              <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-surface rounded-full transition-transform ${routeSortOrder === 'rank' ? 'translate-x-4' : 'translate-x-0'}`} />
-            </div>
-          </button>
+            <option value="efficiency">消費数順</option>
+            <option value="rank">ランク順</option>
+          </select>
         )}
         {activeTab === 'all' && (
           <button
