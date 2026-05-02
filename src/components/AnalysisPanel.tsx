@@ -23,30 +23,38 @@ export const AnalysisPanel = () => {
       </h2>
       <div className="flex items-center gap-3">
         {activeTab === 'recommended' && (
-          <label className="flex items-center gap-2 cursor-pointer group mr-2">
+          <button
+            type="button"
+            onClick={() => setRouteSortOrder(routeSortOrder === 'efficiency' ? 'rank' : 'efficiency')}
+            className="flex items-center gap-2 cursor-pointer group focus:outline-none"
+            aria-pressed={routeSortOrder === 'rank'}
+          >
             <span className="text-caption font-bold text-text-secondary group-hover:text-status-success transition-colors">
               {routeSortOrder === 'efficiency' ? '消費数順' : 'ランク順'}
             </span>
             <div
-              onClick={() => setRouteSortOrder(routeSortOrder === 'efficiency' ? 'rank' : 'efficiency')}
               className={`relative w-8 h-4 rounded-full transition-colors ${routeSortOrder === 'rank' ? 'bg-status-success' : 'bg-border-subtle'}`}
             >
               <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-surface rounded-full transition-transform ${routeSortOrder === 'rank' ? 'translate-x-4' : 'translate-x-0'}`} />
             </div>
-          </label>
+          </button>
         )}
         {activeTab === 'all' && (
-          <label className="flex items-center gap-2 cursor-pointer group">
+          <button
+            type="button"
+            onClick={() => setShowDuplicates(!showDuplicates)}
+            className="flex items-center gap-2 cursor-pointer group focus:outline-none"
+            aria-pressed={showDuplicates}
+          >
             <span className="text-caption font-bold text-text-secondary group-hover:text-primary transition-colors">
               {showDuplicates ? '重複あり' : '重複なし'}
             </span>
             <div 
-              onClick={() => setShowDuplicates(!showDuplicates)}
               className={`relative w-8 h-4 rounded-full transition-colors ${showDuplicates ? 'bg-primary' : 'bg-border-subtle'}`}
             >
               <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-surface rounded-full transition-transform ${showDuplicates ? 'translate-x-4' : 'translate-x-0'}`} />
             </div>
-          </label>
+          </button>
         )}
         <div className="text-overline uppercase bg-surface-bg border border-border-subtle px-2 py-1 rounded-md text-text-secondary font-bold">
           UP TO {maxWorld}-{maxStageNum}
