@@ -148,7 +148,7 @@ const BlueprintCard = ({ bp }: { bp: BlueprintWithState }) => {
               title="所持数を必要数まで一気に増やす"
             >
               <ChevronsUp className="w-2.5 h-2.5" />
-              すべて所持
+              最大まで獲得
             </button>
           )}
         </div>
